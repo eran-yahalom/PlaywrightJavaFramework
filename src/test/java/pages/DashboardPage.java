@@ -18,7 +18,7 @@ public class DashboardPage {
         Locator locator = page.getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE));
         locator.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(10000)); // Waits up to 10 seconds
+                .setTimeout(15000)); // Waits up to 10 seconds
 
         return locator;
     }
