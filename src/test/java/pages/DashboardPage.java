@@ -2,6 +2,7 @@ package pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
 import java.util.regex.Pattern;
@@ -13,22 +14,20 @@ public class DashboardPage {
         this.page = page;
     }
 
-    public Locator getDiscoverTextLocator() {
-        Locator locator = page.getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE));
-        locator.waitFor(new Locator.WaitForOptions()
-                .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(10000)); // Waits up to 10 seconds
+//    public Locator getDiscoverTextLocator() {
+//        Locator locator = page.getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE));
+//        locator.waitFor(new Locator.WaitForOptions()
+//                .setState(WaitForSelectorState.VISIBLE)
+//                .setTimeout(10000)); // Waits up to 10 seconds
+//
+//        return locator;
+//    }
 
-        return locator;
+    public Locator getDiscoverTextLocator() {
+        return page.locator("h1");
     }
 
-//    public Locator getDiscoverTextLocator() {
-//        // 1. Wait until all network requests complete (page fully loaded)
-//        page.waitForLoadState(LoadState.NETWORKIDLE);
-//
-//        // 2. Return the locator for "Discover"
-//        return page.getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE));
-//    }
+
 
     public boolean isUserLoggedIn() {
         try {
