@@ -251,14 +251,15 @@ public class BaseTest {
         Playwright playwright = Playwright.create();
         Browser browser;
 
+        BrowserType.LaunchOptions options = new BrowserType.LaunchOptions().setHeadless(isHeadless);
+
         if ("firefox".equalsIgnoreCase(browserName)) {
-            browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(isHeadless));
+            browser = playwright.firefox().launch(options);
         } else if ("safari".equalsIgnoreCase(browserName) || "webkit".equalsIgnoreCase(browserName)) {
-            browser = playwright.webkit().launch(new BrowserType.LaunchOptions().setHeadless(isHeadless));
+            browser = playwright.webkit().launch(options);
         } else {
-            browser = playwright.chromium().launch(
-                    new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(isHeadless)
-            );
+            // שימוש ב-Chromium המובנה של Playwright (ללא setChannel("chrome"))
+            browser = playwright.chromium().launch(options);
         }
 
         BrowserContext context = browser.newContext();
