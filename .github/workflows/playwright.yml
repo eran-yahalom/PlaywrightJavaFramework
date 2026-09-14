@@ -5,6 +5,27 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch: # מאפשר הרצה ידנית מהממשק עם הפרמטרים
+    inputs:
+      browser:
+        type: choice
+        description: 'בחר דפדפן להרצה'
+        required: true
+        default: 'chrome'
+        options:
+          - chrome
+          - firefox
+          - webkit
+      env:
+        type: choice
+        description: 'בחר סביבת הרצה'
+        required: true
+        default: 'qa1'
+        options:
+          - qa1
+          - qa2
+          - staging
+          - prod
 
 jobs:
   test:
@@ -26,5 +47,9 @@ jobs:
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
 
       - name: Run tests
-        # xvfb-run מספק מסך וירטואלי ל-Playwright במידה והוא רץ ב-Headed mode
-        run: xvfb-run mvn test -DsuiteXmlFile=smokeRunner.xml -Dbrowser=chrome -Dheadless=true
+        run: |
+          # שליפת הערכים שנבחרו ב-UI (או ברירת המחדל בהרצת Push/PR אוטומטית)
+          SELECTED_BROWSER="${{ github.event.inputs.browser || 'chrome' }}"
+          SELECTED_ENV="${{ github.event.inputs.env || 'qa1' }}"
+          
+          xvfb-run mvn test -DsuiteXmlFile=smokeRunner.xml -Dbrowser=$SELECTED_BROWSER -Denv=$SELECTED_ENV -Dheadless=true
