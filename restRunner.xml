@@ -1,0 +1,20 @@
+<suite name="e commerce Test Suite">
+    parallel="classes"
+    thread-count="3">
+    <test name="Regression Tests">
+        <classes>
+            <class name="tests.LoginTest"/>
+            <class name="tests.RegistrationTest"/>
+            <class name="tests.EventTest"/>
+        </classes>
+    </test>
+
+    <test name="Smoke Tests">
+        <classes>
+            <class name="tests.LoginTest"/>
+            <class name="tests.RegistrationTest"/>
+            <class name="tests.EventTest"/>
+        </classes>
+    </test>
+
+</suite>

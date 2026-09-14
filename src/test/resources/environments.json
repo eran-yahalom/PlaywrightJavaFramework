@@ -1,0 +1,24 @@
+{
+  "environments": {
+    "qa1": {
+      "url": "https://eventhub.rahulshettyacademy.com/login",
+      "schema":  "jdbc:sqlite:/Users/eranyahalom/Library/DBeaverData/workspace6/.metadata/sample-database-sqlite-1/Chinook.db",
+      "dbName": "qa1_db",
+      "dbPass": "pass123",
+      "username": "standard_user",
+      "password": "secret_sauce",
+      "creditCardHolderName": "Bob Smith",
+      "creditCardNumber": "4111111111111111",
+      "creditCardExpirationDate": "1230",
+      "creditCardCVV": "123"
+    },
+    "qa2": {
+      "url": "https://qa2.demostore.com",
+      "schema": "staging",
+      "dbName": "qa2_db",
+      "dbPass": "pass456",
+      "username": "admin_qa2",
+      "password": "password_qa2"
+    }
+  }
+}

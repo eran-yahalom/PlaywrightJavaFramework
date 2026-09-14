@@ -1,0 +1,73 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": 120841,
+      "eventId": "{{EVENT_ID}}",
+      "userId": "{{USER_ID}}",
+      "customerName": "Test User 1",
+      "customerEmail": "test1@example.com",
+      "customerPhone": "+972500000001",
+      "quantity": 1,
+      "totalPrice": "100",
+      "status": "confirmed",
+      "bookingRef": "N-FYDYW4",
+      "createdAt": "2026-08-14T18:02:42.000Z",
+      "updatedAt": "2026-08-14T18:02:42.000Z",
+      "event": {
+        "id": "{{EVENT_ID}}",
+        "title": "New postman event-1",
+        "description": "postman API event",
+        "category": "Sports",
+        "venue": "23223",
+        "city": "ssdsd",
+        "eventDate": "2026-08-21T13:13:00.000Z",
+        "price": "100",
+        "totalSeats": 300,
+        "availableSeats": 300,
+        "imageUrl": null,
+        "isStatic": false,
+        "userId": "{{USER_ID}}",
+        "createdAt": "2026-08-14T17:57:51.831Z",
+        "updatedAt": "2026-08-14T17:57:51.831Z"
+      }
+    },
+    {
+      "id": 120839,
+      "eventId": "{{EVENT_ID}}",
+      "userId": "{{USER_ID}}",
+      "customerName": "Test User 2",
+      "customerEmail": "test2@example.com",
+      "customerPhone": "+972500000002",
+      "quantity": 1,
+      "totalPrice": "100",
+      "status": "confirmed",
+      "bookingRef": "N-I0GYCL",
+      "createdAt": "2026-08-14T18:02:25.483Z",
+      "updatedAt": "2026-08-14T18:02:25.483Z",
+      "event": {
+        "id": "{{EVENT_ID}}",
+        "title": "New postman event-1",
+        "description": "postman API event",
+        "category": "Sports",
+        "venue": "23223",
+        "city": "ssdsd",
+        "eventDate": "2026-08-21T13:13:00.000Z",
+        "price": "100",
+        "totalSeats": 300,
+        "availableSeats": 300,
+        "imageUrl": null,
+        "isStatic": false,
+        "userId": "{{USER_ID}}",
+        "createdAt": "2026-08-14T17:57:51.831Z",
+        "updatedAt": "2026-08-14T17:57:51.831Z"
+      }
+    }
+  ],
+  "pagination": {
+    "total": 2,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}

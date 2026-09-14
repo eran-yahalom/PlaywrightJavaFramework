@@ -1,0 +1,30 @@
+[
+  {
+    "titlePrefix": "New test event-4",
+    "description": "This JSON file contains sample data for event bookings",
+    "city": "New York",
+    "category": "Sports",
+    "venue": "Madison Square Garden",
+    "eventDate": "2027-09-19T12:41",
+    "price": "100",
+    "totalSeats": 300,
+    "availableSeats": 300,
+    "fullName": "James Dean",
+    "email": "asd@yopmail.com",
+    "phone": "+972500000001"
+  },
+  {
+    "titlePrefix": "Event Booking Data-5",
+    "description": "This JSON file",
+    "city": "LA",
+    "venue": "romi 33",
+    "category": "Concert",
+    "eventDate": "2027-09-19T12:41",
+    "price": "123",
+    "totalSeats": 44,
+    "availableSeats": 456,
+    "fullName": "ron kol",
+    "email": "wea@yopmail.com",
+    "phone": "+97252222001"
+  }
+]

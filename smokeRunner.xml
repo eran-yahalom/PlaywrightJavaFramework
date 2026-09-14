@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="Test Suite" parallel="methods" thread-count="3">
+    <test name="Regression Tests">
+        <classes>
+            <class name="tests.AllEventsTest"/>
+            <class name="tests.BookingTest"/>
+            <class name="tests.EventTest"/>
+            <class name="tests.RegistrationTest"/>
+            <class name="tests.LoginTest"/>
+            <class name="tests.RegistrationTest"/>
+            <class name="tests.UpcomingEventsTest"/>
+        </classes>
+    </test>
+</suite>
