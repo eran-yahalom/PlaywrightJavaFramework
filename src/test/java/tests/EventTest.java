@@ -149,7 +149,7 @@ public class EventTest extends BaseTest {
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
         EventApiService.registerNewDriverAPI(payload);
 
-        DashboardPage dashboardPage = loginPage.loginToApp("abc@yopmail.com", "Aa123456!");
+        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
