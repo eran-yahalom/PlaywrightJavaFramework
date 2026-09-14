@@ -23,10 +23,18 @@ public class DashboardPage {
 //        return locator;
 //    }
 
-    public Locator getDiscoverTextLocator() {
-        return page.locator("h1");
-    }
+//    public Locator getDiscoverTextLocator() {
+//        return page.locator("h1");
+//    }
 
+    public Locator getDiscoverTextLocator() {
+        Locator locator = page.locator("h1");
+        locator.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(10000)); // Waits up to 10 seconds
+
+        return locator;
+    }
 
 
     public boolean isUserLoggedIn() {
