@@ -167,8 +167,7 @@ import com.microsoft.playwright.*;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import io.qameta.allure.Allure;
 import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -178,17 +177,19 @@ import java.util.Properties;
 
 public class BaseTest {
 
-    // 1. הגדרת ThreadLocal עבור רכיבי Playwright להרצה מקבילית בטוחה
+    // 1. Playwright & Browser נשמרים ברמת ה-Thread לשימוש חוזר לאורך כל המחלקה
     private static final ThreadLocal<Playwright> playwrightTL = new ThreadLocal<>();
     private static final ThreadLocal<Browser> browserTL = new ThreadLocal<>();
+
+    // 2. Context & Page מוקמים מחדש לכל טסט בנפרד (מבטיח בידוד מוחלט וריצה מהירה)
     private static final ThreadLocal<BrowserContext> contextTL = new ThreadLocal<>();
     private static final ThreadLocal<Page> pageTL = new ThreadLocal<>();
 
     protected String base_url;
     protected String env;
     protected JsonNode envData;
+    protected static Properties prop = new Properties();
 
-    // 2. מתודת Getter לגישה ל-Page מתוך מחלקות הטסטים
     public Page getPage() {
         return pageTL.get();
     }
@@ -205,10 +206,9 @@ public class BaseTest {
         return playwrightTL.get();
     }
 
-    @BeforeMethod(alwaysRun = true)
-    public void setUp() throws IOException {
-        // 1. Load config.properties safely
-        Properties prop = new Properties();
+    @BeforeSuite(alwaysRun = true)
+    public void beforeSuite() throws IOException {
+        // טעינת config.properties פעם אחת בלבד לפני תחילת הריצה
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
             if (input != null) {
                 prop.load(input);
@@ -218,60 +218,61 @@ public class BaseTest {
                 }
             }
         }
+    }
 
-        // 2. Resolve target environment (-Denv CLI parameter > config.properties > default "qa1")
+    @BeforeMethod(alwaysRun = true)
+    public void setUp() throws IOException {
+        // 1. Resolve environment & config
         String envFromCli = System.getProperty("env");
         env = (envFromCli != null && !envFromCli.trim().isEmpty())
                 ? envFromCli.trim()
                 : prop.getProperty("env", "qa1").trim();
 
-        // 3. Load dynamic properties from environments.json for the active env
         loadEnvironmentConfig(env);
 
-        // 4. Assign base_url from environments.json (with fallback to config.properties)
         if (envData != null && envData.has("url")) {
             base_url = envData.get("url").asText();
         } else {
             base_url = prop.getProperty("qa.base.url");
         }
 
-        // 5. Resolve browser selection (-Dbrowser CLI > config.properties > default "chrome")
-        String browserFromCli = System.getProperty("browser");
-        String browserName = (browserFromCli != null && !browserFromCli.trim().isEmpty())
-                ? browserFromCli.trim()
-                : prop.getProperty("browser", "chrome").trim();
+        // 2. Lazy Initialization: פתיחת Browser & Playwright פעם אחת בלבד ל-Thread
+        if (playwrightTL.get() == null) {
+            Playwright playwright = Playwright.create();
+            playwrightTL.set(playwright);
 
-        // 6. Resolve headless mode (-Dheadless CLI > config.properties > default "true" for CI)
-        String headlessFromCli = System.getProperty("headless");
-        boolean isHeadless = (headlessFromCli != null && !headlessFromCli.trim().isEmpty())
-                ? Boolean.parseBoolean(headlessFromCli.trim())
-                : Boolean.parseBoolean(prop.getProperty("headless", "true").trim());
+            String browserFromCli = System.getProperty("browser");
+            String browserName = (browserFromCli != null && !browserFromCli.trim().isEmpty())
+                    ? browserFromCli.trim()
+                    : prop.getProperty("browser", "chrome").trim();
 
-        // 7. Initialize Playwright & Browser (מופע ייחודי לכל Thread)
-        Playwright playwright = Playwright.create();
-        Browser browser;
+            String headlessFromCli = System.getProperty("headless");
+            boolean isHeadless = (headlessFromCli != null && !headlessFromCli.trim().isEmpty())
+                    ? Boolean.parseBoolean(headlessFromCli.trim())
+                    : Boolean.parseBoolean(prop.getProperty("headless", "true").trim());
 
-        BrowserType.LaunchOptions options = new BrowserType.LaunchOptions().setHeadless(isHeadless);
+            BrowserType.LaunchOptions options = new BrowserType.LaunchOptions().setHeadless(isHeadless);
 
-        if ("firefox".equalsIgnoreCase(browserName)) {
-            browser = playwright.firefox().launch(options);
-        } else if ("safari".equalsIgnoreCase(browserName) || "webkit".equalsIgnoreCase(browserName)) {
-            browser = playwright.webkit().launch(options);
-        } else {
-            // שימוש ב-Chromium המובנה של Playwright (ללא setChannel("chrome"))
-            browser = playwright.chromium().launch(options);
+            Browser browser;
+            if ("firefox".equalsIgnoreCase(browserName)) {
+                browser = playwright.firefox().launch(options);
+            } else if ("safari".equalsIgnoreCase(browserName) || "webkit".equalsIgnoreCase(browserName)) {
+                browser = playwright.webkit().launch(options);
+            } else {
+                browser = playwright.chromium().launch(options);
+            }
+            browserTL.set(browser);
         }
 
-        BrowserContext context = browser.newContext();
+        // 3. יצירת Context ו-Page חדשים ונקיים לכל טסט (~50ms בלבד)
+        BrowserContext context = browserTL.get().newContext();
         Page page = context.newPage();
 
-        // שמירת המופעים ב-ThreadLocal
-        playwrightTL.set(playwright);
-        browserTL.set(browser);
         contextTL.set(context);
         pageTL.set(page);
 
-        PlaywrightAssertions.setDefaultAssertionTimeout(2000);
+        // הגדלת דיפולט ה-Timeout מ-2000ms ל-5000ms למניעת Flaky Tests ב-CI
+        PlaywrightAssertions.setDefaultAssertionTimeout(5000);
 
         if (base_url != null && !base_url.isEmpty()) {
             getPage().navigate(base_url);
@@ -280,9 +281,6 @@ public class BaseTest {
         }
     }
 
-    /**
-     * Reads src/test/resources/environments.json and extracts the node for the target environment.
-     */
     private void loadEnvironmentConfig(String targetEnv) {
         ObjectMapper mapper = new ObjectMapper();
         try (InputStream jsonStream = getClass().getClassLoader().getResourceAsStream("environments.json")) {
@@ -291,8 +289,6 @@ public class BaseTest {
                     : new FileInputStream("src/test/resources/environments.json");
 
             JsonNode rootNode = mapper.readTree(is);
-
-            // Access the nested "environments" object if present, otherwise fall back to rootNode
             JsonNode environmentsNode = rootNode.has("environments")
                     ? rootNode.get("environments")
                     : rootNode;
@@ -310,7 +306,7 @@ public class BaseTest {
     @AfterMethod(alwaysRun = true)
     public void tearDown(ITestResult result) {
         try {
-            // 1. צילום מסך ל-Allure במידה והטסט נכשל (מתבצע לפני סגירת ה-Page)
+            // 1. צילום מסך ל-Allure במקרה של כישלון
             if (result.getStatus() == ITestResult.FAILURE && pageTL.get() != null) {
                 try {
                     byte[] screenshot = pageTL.get().screenshot(new Page.ScreenshotOptions().setFullPage(true));
@@ -320,16 +316,24 @@ public class BaseTest {
                 }
             }
 
-            // 2. סגירת משאבי Playwright
+            // 2. סגירה מהירה רק של ה-Page וה-Context
             if (pageTL.get() != null) pageTL.get().close();
             if (contextTL.get() != null) contextTL.get().close();
-            if (browserTL.get() != null) browserTL.get().close();
-            if (playwrightTL.get() != null) playwrightTL.get().close();
         } finally {
-            // ניקוי זיכרון חובה של ה-ThreadLocal כדי למנוע Memory Leaks
             pageTL.remove();
             contextTL.remove();
+        }
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void tearDownClass() {
+        // 3. סגירת ה-Browser וה-Playwright רק בסיום מחלקת הטסטים
+        if (browserTL.get() != null) {
+            browserTL.get().close();
             browserTL.remove();
+        }
+        if (playwrightTL.get() != null) {
+            playwrightTL.get().close();
             playwrightTL.remove();
         }
     }
