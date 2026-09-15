@@ -2,9 +2,7 @@ package pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
-
 import java.util.regex.Pattern;
 
 public class DashboardPage {
@@ -22,13 +20,6 @@ public class DashboardPage {
 
         return locator;
     }
-
-//    public Locator getDiscoverTextLocator() {
-//        return page.locator("h1");
-//    }
-
-
-
 
     public boolean isUserLoggedIn() {
         try {

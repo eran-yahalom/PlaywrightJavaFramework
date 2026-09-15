@@ -2,9 +2,9 @@ package tests;
 
 import api.EventApiService;
 import com.jayway.jsonpath.JsonPath;
-import com.microsoft.playwright.*;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.WaitForSelectorState;
-import net.datafaker.Faker;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.*;
@@ -313,7 +313,7 @@ public class BookingTest extends BaseTest {
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
-        String category=TestDataUtils.getCategory();
+        String category = TestDataUtils.getCategory();
 
         LoginPage loginPage = new LoginPage(getPage());
 
@@ -544,7 +544,7 @@ public class BookingTest extends BaseTest {
         String email = TestDataUtils.getEmail();
         String password = TestDataUtils.getPassword();
 
-        DashboardPage dashboardPage=new DashboardPage(getPage());
+        DashboardPage dashboardPage = new DashboardPage(getPage());
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
         Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);

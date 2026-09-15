@@ -1,19 +1,16 @@
 package utils;
 
-import net.datafaker.Faker;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class TestDataBuilder {
-
-    static Faker faker = new Faker();
 
     public static Map<String, Object> getLoginPayload(String email,
                                                       String password) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("email", email);
         payload.put("password", password);
+
         return payload;
     }
 
@@ -52,6 +49,5 @@ public class TestDataBuilder {
         bookingData.put("eventId", eventId);
 
         return bookingData;
-
     }
 }

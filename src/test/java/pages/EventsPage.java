@@ -69,8 +69,6 @@ public class EventsPage {
 
     public BookingFormPage proceedToBookingEvent(Locator card) {
         try {
-//            Locator eventCards = waitForEventsToLoad();
-//            Locator loc = eventCards.filter(new Locator.FilterOptions().setHasText(eventTitle));
             card.getByTestId("book-now-btn").click();
             return new BookingFormPage(page);
         } catch (Exception e) {
@@ -92,7 +90,6 @@ public class EventsPage {
     }
 
     public int countEventSeats(Locator card) {
-        //  Locator card = getEventCard(eventTitle);
         String seatsText = card.getByText("seats").textContent().split(" ")[0];
         return Integer.parseInt(seatsText);
     }

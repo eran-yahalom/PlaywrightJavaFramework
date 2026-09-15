@@ -6,7 +6,6 @@ import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.RequestOptions;
 import org.testng.Assert;
-import tests.BaseTest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +27,6 @@ public class ApiUtils {
                 RequestOptions.create().setHeader("Authorization", "Bearer " + token));
     }
 
-    // מתודת עזר למחיקת אירוע
     public static APIResponse deleteEvent(APIRequestContext requestContext, String eventId, String token) {
         return requestContext.delete(BASE_URL + EVENTS_URL + eventId,
                 RequestOptions.create().setHeader("Authorization", "Bearer " + token));

@@ -24,7 +24,6 @@ public class AdminEventPage {
     private static final String ALL_EVENTS_ROWS_TEST_ID = "event-table-row";
     private static final String ALL_EVENTS_DELETE_BUTTON_TEST_ID = "delete-event-btn";
 
-
     public AdminEventPage(Page page) {
         this.page = page;
     }
@@ -77,7 +76,6 @@ public class AdminEventPage {
         if (newPrice != null) page.getByLabel(PRICE).fill(newPrice);
         if (newSeats != null) page.getByPlaceholder(SEATS).fill(newSeats);
 
-        // 3. Save changes
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Update Event")).click();
     }
 
@@ -90,8 +88,7 @@ public class AdminEventPage {
         eventData.put("time", page.getByLabel(EVENT_DATE_AND_TIME).inputValue());
         eventData.put("price", page.getByLabel(PRICE).inputValue());
         eventData.put("seats", page.getByPlaceholder(SEATS).inputValue());
-        eventData.put("category",page.getByRole(AriaRole.COMBOBOX).inputValue());
-
+        eventData.put("category", page.getByRole(AriaRole.COMBOBOX).inputValue());
 
         return eventData;
     }

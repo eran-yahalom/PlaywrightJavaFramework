@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
-
 public class EventApiService {
 
     private final APIRequestContext requestContext;
@@ -23,18 +21,9 @@ public class EventApiService {
     private static final String LOGIN_URL = "/api/auth/login";
     private static final String DELETE_URL = "/api/events/";
 
-
-    // בנאי המקבל Playwright ומקים context
-    public EventApiService(Playwright playwright) {
-        this.requestContext = playwright.request().newContext();
-    }
-
-    // בנאי חלופי המקבל APIRequestContext קים
     public EventApiService(APIRequestContext requestContext) {
         this.requestContext = requestContext;
     }
-
-    // --- Auth API Methods ---
 
     public static Map<String, Object> registerNewDriverAPI(Map<String, Object> payload) {
 
@@ -81,7 +70,6 @@ public class EventApiService {
         loginDetails.put("success", JsonPath.read(response.text(), "$.success"));
         loginDetails.put("error", JsonPath.read(response.text(), "$.error"));
         loginDetails.put("status", response.status());
-
 
         return loginDetails;
     }
@@ -144,7 +132,6 @@ public class EventApiService {
         bookingEventData.put("bookingVenue", JsonPath.read(response.text(), "$.data.event.venue"));
         bookingEventData.put("totalPrice", JsonPath.read(response.text(), "$.data.totalPrice"));
 
-
         return bookingEventData;
     }
 
@@ -177,27 +164,6 @@ public class EventApiService {
 
         return allEventsData;
     }
-
-
-//    public APIResponse registerFromAPI(String email, String password) {
-//        Map<String, Object> payload = new HashMap<>();
-//        payload.put("email", email);
-//        payload.put("password", password);
-//
-//        APIResponse response = requestContext.post(BASE_URL + "/api/auth/register",
-//                RequestOptions.create().setData(payload));
-//
-//        Assert.assertNotNull(response);
-//        return response;
-//    }
-
-
-//    public String loginAndGetTokenFromAPI(String email, String password) {
-//        APIResponse response = loginFromAPI(email, password);
-//        return JsonPath.read(response.text(), "$.token");
-//    }
-
-    // --- Events API Methods ---
 
     public Map<String, String> createNewEventAPI(String token, Map<String, Object> eventData) {
         Map<String, String> createEventData = new HashMap<>();
@@ -237,8 +203,6 @@ public class EventApiService {
                         .setQueryParam("limit", String.valueOf(limit))
                         .setHeader("Authorization", "Bearer " + token));
     }
-
-    // --- Bookings API Methods ---
 
     public APIResponse createBooking(String token, String name, String email, String phone, int quantity, int eventId) {
         Map<String, Object> bookingData = new HashMap<>();

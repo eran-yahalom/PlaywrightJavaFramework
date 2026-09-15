@@ -20,10 +20,6 @@ public class UpcomingEventsPage {
         this.page = page;
     }
 
-    /**
-     * Waits for background API/network calls to settle before returning event cards.
-     * Prevents assertion failures when dynamic filtering yields 0 results.
-     */
     public Locator waitForEventsToLoad() {
         page.waitForLoadState(LoadState.NETWORKIDLE);
         return page.getByTestId(EVENT_CARDS_LIST);
@@ -32,12 +28,11 @@ public class UpcomingEventsPage {
     public int countEvents() {
         Locator events = page.getByTestId(EVENT_CARDS_LIST);
         try {
-            // Try waiting up to 5 seconds for at least 1 card to show up
             events.first().waitFor(new Locator.WaitForOptions()
                     .setState(WaitForSelectorState.VISIBLE)
                     .setTimeout(5000));
         } catch (TimeoutError e) {
-            return 0; // Return 0 safely if no cards appear
+            return 0;
         }
         return events.count();
     }

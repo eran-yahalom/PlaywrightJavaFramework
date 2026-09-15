@@ -34,19 +34,19 @@ public class BookingFormPage {
     public String getValueByLabelName(String locatorText) {
         return page.locator("div")
                 .filter(new Locator.FilterOptions().setHasText(locatorText))
-                .last()       // בוחר את ה-div הפנימי ביותר
+                .last()
                 .locator("span")
-                .first()      // מוודא שנלקח ה-span היחיד
+                .first()
                 .innerText();
     }
 
     private String getValueByLabel(String labelText) {
         return page.locator("div")
                 .filter(new Locator.FilterOptions().setHasText(labelText))
-                .last() // Focuses on the innermost div block
+                .last()
                 .locator("p")
                 .nth(1)
-                .innerText(); // innerText() automatically pulls text from child <span> tags
+                .innerText();
     }
 
     public String getPricePerTicketTotal() {
@@ -92,13 +92,11 @@ public class BookingFormPage {
 
     public MyBookingsPage clickOnViewMyBookingButton() {
         page.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON, new Page.GetByRoleOptions().setName(VIEW_MY_BOOKING_BUTTON)).click();
-
         return new MyBookingsPage(page);
     }
 
     public EventsPage clickOnBrowseMoreEventsButton() {
         page.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON, new Page.GetByRoleOptions().setName(BROWSE_MORE_EVENTS_BUTTON)).click();
-
         return new EventsPage(page);
     }
 }

@@ -1,12 +1,14 @@
-package tests;
+package helper;
 
-import com.microsoft.playwright.*;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.assertions.LocatorAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+import tests.BaseTest;
 
 import java.util.regex.Pattern;
 
@@ -15,8 +17,8 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 public class BasicsTest extends BaseTest {
     //HeadMode - see brawser in test
     //HeadlessMode - run test in background - cant see brawser (bteeter fast, run for CI/CD
-Page page= getContext().newPage();
-String eventTitle="";
+    Page page = getContext().newPage();
+    String eventTitle = "";
 
     @Test(description = "registration test")
     public void registerNewUserTest() {
@@ -66,7 +68,7 @@ String eventTitle="";
         page.locator("#event-title-input").fill(eventTitle);
 
         //fill description input field
-        page.getByPlaceholder("Describe the event…").fill("Test Event"+eventTitle);
+        page.getByPlaceholder("Describe the event…").fill("Test Event" + eventTitle);
 
         // get category dropdown and select category
         page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Category")).selectOption("Concert");

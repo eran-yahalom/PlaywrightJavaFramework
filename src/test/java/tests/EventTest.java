@@ -335,6 +335,5 @@ public class EventTest extends BaseTest {
         assertThat(eventCards.first()).isVisible();  //playwrite assert we wait 5 sec (page.waitForTimeout(5000);) for first card to show
         Assert.assertEquals(eventCards.count(), 4);
         assertThat(getPage().locator("mx-1")).isHidden(); // 9 elements banner is not visible
-
     }
 }

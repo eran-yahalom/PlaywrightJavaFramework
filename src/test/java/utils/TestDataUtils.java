@@ -1,6 +1,5 @@
 package utils;
 
-
 import net.datafaker.Faker;
 
 import java.time.Instant;
@@ -45,10 +44,7 @@ public class TestDataUtils {
     }
 
     public static String getFutureIsoDatePayLoad() {
-        // 1. Use timeAndDate() which returns a modern java.time.Instant directly
         Instant futureInstant = getFaker().timeAndDate().future(365, TimeUnit.DAYS);
-
-        // 2. Format to ISO-8601 UTC string
         DateTimeFormatter formatter = DateTimeFormatter
                 .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
                 .withZone(ZoneOffset.UTC);
@@ -57,10 +53,7 @@ public class TestDataUtils {
     }
 
     public static String getFutureIsoDate() {
-        // 1. Use timeAndDate() which returns a modern java.time.Instant directly
         Instant futureInstant = getFaker().timeAndDate().future(365, TimeUnit.DAYS);
-
-        // 2. Format to ISO-8601 string ("2027-09-19T12:41")
         DateTimeFormatter formatter = DateTimeFormatter
                 .ofPattern("yyyy-MM-dd'T'HH:mm")
                 .withZone(ZoneOffset.UTC);
@@ -88,7 +81,7 @@ public class TestDataUtils {
         return getFaker().address().city();
     }
 
-    public static int getQty(){
+    public static int getQty() {
         return getFaker().number().numberBetween(1, 10);
     }
 }

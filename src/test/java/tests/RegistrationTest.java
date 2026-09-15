@@ -1,15 +1,11 @@
 package tests;
 
 import api.EventApiService;
-import com.microsoft.playwright.APIResponse;
-import net.datafaker.Faker;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import pages.DashboardPage;
 import pages.LoginPage;
 import pages.RegistrationPage;
-import utils.ApiUtils;
 import utils.TestDataBuilder;
 import utils.TestDataUtils;
 
@@ -26,13 +22,12 @@ public class RegistrationTest extends BaseTest {
         String password = TestDataUtils.getPassword();
 
         LoginPage loginPage = new LoginPage(getPage());
-        DashboardPage dashboardPage=new DashboardPage(getPage());
+        DashboardPage dashboardPage = new DashboardPage(getPage());
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
         Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
 
         Assert.assertEquals(driverDetails.get("status"), "201");
         Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
-//        assertThat(getPage().getByText("Discover & Book")).isVisible();
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
     }
 
@@ -46,8 +41,6 @@ public class RegistrationTest extends BaseTest {
 
     @Test(description = "Register with incorrect mail")
     public void registerWithIncorrectMail() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         RegistrationPage registrationPage = new RegistrationPage(getPage());
 
         LoginPage loginPage = new LoginPage(getPage());
@@ -72,7 +65,7 @@ public class RegistrationTest extends BaseTest {
     @Test(description = "Register with invalid password")
     public void registerWithInvalidPassword() {
         String password = "aaa";
-        String email=TestDataUtils.getEmail();
+        String email = TestDataUtils.getEmail();
 
         LoginPage loginPage = new LoginPage(getPage());
         RegistrationPage registrationPage = new RegistrationPage(getPage());
@@ -84,8 +77,6 @@ public class RegistrationTest extends BaseTest {
 
     @Test(description = "Register with no password")
     public void registerWithNoPassword() {
-        String password = TestDataUtils.getPassword();
-
         LoginPage loginPage = new LoginPage(getPage());
         RegistrationPage registrationPage = new RegistrationPage(getPage());
 
@@ -97,7 +88,6 @@ public class RegistrationTest extends BaseTest {
 
     @Test(description = "Register with not matching password")
     public void registerWithNotMatchingPassword() {
-        String email = TestDataUtils.getEmail();
         String password = TestDataUtils.getPassword();
         LoginPage loginPage = new LoginPage(getPage());
         RegistrationPage registrationPage = new RegistrationPage(getPage());
@@ -117,7 +107,7 @@ public class RegistrationTest extends BaseTest {
 
         loginPage.goToRegistrationPage();
         assertThat(getPage().getByText("Create your account")).isVisible();
-        DashboardPage dashboardPage = registrationPage.enterRegistrationInfo(email, "Aa123456!", "Aa123456!");
+        registrationPage.enterRegistrationInfo(email, "Aa123456!", "Aa123456!");
         assertThat(getPage().getByText("Logout")).isVisible();
         assertThat(getPage().getByText(email)).isVisible();
     }

@@ -2,7 +2,6 @@ package pages;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class LoginPage {
@@ -16,7 +15,6 @@ public class LoginPage {
 
     public boolean loginToApplication(String username, String password) {
         try {
-           // page.navigate(URL);
             String pageTitle = page.title();
             System.out.println("page title:" + pageTitle);
             assertThat(page).hasTitle("EventHub — Discover & Book Events"); // assert the page title using playwright assertion
@@ -32,17 +30,14 @@ public class LoginPage {
     }
 
     public DashboardPage loginToApp(String username, String password) {
-
-     //   page.navigate(URL);
         String pageTitle = page.title();
         System.out.println("page title:" + pageTitle);
         assertThat(page).hasTitle("EventHub — Discover & Book Events"); // assert the page title using playwright assertion
         page.getByLabel("Email").fill(username);
         page.getByLabel("Password").fill(password);
-
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign In")).click();
-        return new DashboardPage(page);
 
+        return new DashboardPage(page);
     }
 
     public RegistrationPage goToRegistrationPage() {

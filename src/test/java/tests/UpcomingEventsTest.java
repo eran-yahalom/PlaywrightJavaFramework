@@ -58,7 +58,6 @@ public class UpcomingEventsTest extends BaseTest {
 
         Assert.assertTrue(upcomingEventsPage.clickOnClearFilterButton());
         Assert.assertFalse(upcomingEventsPage.isClearFilterDisplayed());
-
         Assert.assertTrue(upcomingEventsPage.isCitySelectorEntryCorrect("All Cities"));
         Assert.assertTrue(upcomingEventsPage.isCategorySelectorEntryCorrect("All Categories"));
     }
@@ -78,6 +77,7 @@ public class UpcomingEventsTest extends BaseTest {
 
         UpcomingEventsPage upcomingEventsPage = dashboardPage.clickOnEventsTopLink();
         upcomingEventsPage.fillEventsSearchField("No results");
+
         assertThat(getPage().getByText("No events found")).isVisible();
         Assert.assertEquals(upcomingEventsPage.countEvents(), 0);
     }

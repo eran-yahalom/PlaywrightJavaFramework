@@ -14,7 +14,6 @@ public class ViewBookingDetailsPage {
     private static final String CANCEL_BOOKING_BUTTON = "Cancel Booking";
     private static final String BACK_TO_MY_BOOKING_BUTTON = "← Back to My Bookings";
     private static final String CANCEL_BOOKING_BPOPUP_TEXT = "Cancel this booking?";
-    // private static final String CANCEL_BOOKING_BPOPUP_TEXT = "Cancel this booking?";
 
 
     public ViewBookingDetailsPage(Page page) {
@@ -54,8 +53,6 @@ public class ViewBookingDetailsPage {
         myBookingHeaderValues.put("eventStatus", page.locator("span.inline-flex.text-emerald-700").innerText());
 
         return myBookingHeaderValues;
-
-
     }
 
     public Map<String, Object> getCustomerEventDetails() {

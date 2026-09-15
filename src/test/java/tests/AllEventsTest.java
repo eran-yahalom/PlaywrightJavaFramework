@@ -90,17 +90,13 @@ public class AllEventsTest extends BaseTest {
         adminEventPage.waitForEventToAppear(eventName);
         int eventRowsAfterAdding = adminEventPage.countEventRows();
         Assert.assertEquals(eventRowsBeforeAdding + 1, eventRowsAfterAdding, "event rows are not equal");
-//        int totalEvents = Integer.parseInt(getPage().getByText(Pattern.compile("total", Pattern.CASE_INSENSITIVE)).last().innerText().split("")[0]);
-        // 1. Fetch raw text from the element (e.g., "Total: 15")
         String rawText = getPage()
                 .getByText(Pattern.compile("total", Pattern.CASE_INSENSITIVE))
                 .last()
                 .innerText();
 
-// 2. Strip out everything except digits (0-9)
         String numbersOnly = rawText.replaceAll("\\D+", "");
 
-// 3. Parse to integer (safely handling empty results)
         int totalEvents = numbersOnly.isEmpty() ? 0 : Integer.parseInt(numbersOnly);
         Assert.assertEquals(totalEvents, eventRowsAfterAdding, "total events is not equl");
     }
