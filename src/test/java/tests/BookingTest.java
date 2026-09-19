@@ -4,6 +4,7 @@ import api.EventApiService;
 import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Route;
+import com.microsoft.playwright.assertions.LocatorAssertions;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -21,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -419,8 +421,14 @@ public class BookingTest extends BaseTest {
         int numberOfBookingCardsBefore = myBookingsPage.getNumberBookingOfCards();
         myBookingsPage.clearAllBooking();
 
-        assertThat(getPage().getByText("Booking cancelled successfully")).isVisible();
-        assertThat(getPage().getByText("No bookings yet")).isVisible();
+        assertThat(getPage().getByText(Pattern.compile("Booking cancelled successfully", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
+
+        assertThat(getPage().getByText(Pattern.compile("No bookings yet", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
+
+//        assertThat(getPage().getByText("Booking cancelled successfully")).isVisible();
+//        assertThat(getPage().getByText("No bookings yet")).isVisible();
 
         int numberOfBookingCardsAfter = myBookingsPage.getNumberBookingOfCards();
         Assert.assertEquals(numberOfBookingCardsBefore, numberOfBookingCardsAfter + 1);

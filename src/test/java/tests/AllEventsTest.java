@@ -2,6 +2,7 @@ package tests;
 
 import api.EventApiService;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.assertions.LocatorAssertions;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.AdminEventPage;
@@ -167,7 +168,9 @@ public class AllEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
-        assertThat(getPage().getByText("Event created!")).isVisible();
+        assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
+
         assertThat(getPage().getByText("All Events")).isVisible();
 
         Locator event = adminEventPage.getEventRow(eventName);

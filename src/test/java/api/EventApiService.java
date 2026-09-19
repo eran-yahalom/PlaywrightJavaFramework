@@ -25,19 +25,41 @@ public class EventApiService {
         this.requestContext = requestContext;
     }
 
+//    public static Map<String, Object> registerNewDriverAPI(Map<String, Object> payload) {
+//
+//        Playwright playwright = Playwright.create();
+//        APIRequestContext apiRequestContext = playwright.request().newContext();
+//        Map<String, Object> registerDetails = new HashMap<>();
+//        APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
+//                RequestOptions.create().setData(payload));
+//
+//        Assert.assertTrue(registerAPIResponse.ok());
+//
+//        registerDetails.put("bearerToken", JsonPath.read(registerAPIResponse.text(), "$.token"));
+//        registerDetails.put("userId", JsonPath.read(registerAPIResponse.text(), "$.user.id"));
+//        registerDetails.put("status", String.valueOf(registerAPIResponse.status()));
+//
+//        return registerDetails;
+//    }
+
     public static Map<String, Object> registerNewDriverAPI(Map<String, Object> payload) {
-
-        Playwright playwright = Playwright.create();
-        APIRequestContext apiRequestContext = playwright.request().newContext();
         Map<String, Object> registerDetails = new HashMap<>();
-        APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
-                RequestOptions.create().setData(payload));
 
-        Assert.assertTrue(registerAPIResponse.ok());
+        // Playwright auto-closes at the end of this block
+        try (Playwright playwright = Playwright.create()) {
+            APIRequestContext apiRequestContext = playwright.request().newContext();
 
-        registerDetails.put("bearerToken", JsonPath.read(registerAPIResponse.text(), "$.token"));
-        registerDetails.put("userId", JsonPath.read(registerAPIResponse.text(), "$.user.id"));
-        registerDetails.put("status", String.valueOf(registerAPIResponse.status()));
+            APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
+                    RequestOptions.create()
+                            .setData(payload)
+                            .setHeader("Content-Type", "application/json"));
+
+            Assert.assertTrue(registerAPIResponse.ok());
+
+            registerDetails.put("bearerToken", JsonPath.read(registerAPIResponse.text(), "$.token"));
+            registerDetails.put("userId", JsonPath.read(registerAPIResponse.text(), "$.user.id"));
+            registerDetails.put("status", String.valueOf(registerAPIResponse.status()));
+        }
 
         return registerDetails;
     }

@@ -55,8 +55,9 @@ public class AdminEventPage {
     }
 
     public Locator waitForAllEventRowsToLoad() {
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        return page.getByTestId(ALL_EVENTS_ROWS_TEST_ID);
+        Locator rows = page.getByTestId(ALL_EVENTS_ROWS_TEST_ID);
+        rows.first().waitFor(); // ממתין שהשורה הראשונה תופיע ב-DOM ותהיה גלויה
+        return rows;
     }
 
     public void editEvent(String newTitle, String newDescription,
