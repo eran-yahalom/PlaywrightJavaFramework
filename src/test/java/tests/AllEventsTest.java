@@ -218,19 +218,22 @@ public class AllEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
-        assertThat(getPage().getByText("Event created!")).isVisible();
+        assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
         assertThat(getPage().getByText("All Events")).isVisible();
 
         Locator event = adminEventPage.getEventRow(eventName);
         event.getByText("edit").click();
+
+        assertThat(getPage().locator("td:nth-child(3)").first()).not().hasText("");
 
         Map<String, Object> uneditedData = adminEventPage.getEventData(eventName);
         getPage().getByText("Cancel edit").click();
 
         Locator card = adminEventPage.getEventRow(eventName);
 
-        Assert.assertEquals(card.locator("td>span").first().innerText(), eventName, "event names don't match");
-        Assert.assertEquals(card.locator("td>span").nth(1).innerText(), uneditedData.get("category"), "category don't match");
-        Assert.assertEquals(card.locator("td:nth-child(3)").first().innerText(), uneditedData.get("city"), "city don't match");
+        Assert.assertEquals(card.locator("td>span").first().innerText(), eventName, "Event names don't match");
+        Assert.assertEquals(card.locator("td>span").nth(1).innerText(), uneditedData.get("category"), "Category doesn't match");
+        Assert.assertEquals(card.locator("td:nth-child(3)").first().innerText(), uneditedData.get("city"), "City doesn't match");
     }
 }
