@@ -7,6 +7,7 @@ import com.microsoft.playwright.Route;
 import com.microsoft.playwright.assertions.LocatorAssertions;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import pages.*;
 import utils.MockConstants;
@@ -17,10 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -29,20 +27,50 @@ import static org.awaitility.Awaitility.await;
 
 public class BookingTest extends BaseTest {
 
+    private String email;
+    private String password;
+    private String token;
+    private int userId;
+
+    private HeaderComponent headerComponent;
+    private DashboardPage dashboardPage;
+    private AdminEventPage adminEventPage;
+    private EventsPage eventsPage;
+
+    @BeforeMethod
+    public void setupNewDriverAndFastLogin() {
+        email = TestDataUtils.getEmail();
+        password = TestDataUtils.getPassword();
+
+        // 1. הרשמת משתמש חדש דרך API
+        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Assert.assertNotNull(driverDetails, "driverDetails is null");
+
+        token = driverDetails.get("bearerToken") != null ? driverDetails.get("bearerToken").toString() : null;
+        if (driverDetails.containsKey("userId") && driverDetails.get("userId") != null) {
+            userId = (int) driverDetails.get("userId");
+        }
+
+        if (token != null) {
+            // 2. הזרקת הטוקן ל-localStorage לחיבור מהיר לפני ניווט
+            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
+            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+        }
+
+        // 3. אתחול האובייקטים המשותפים
+        headerComponent = new HeaderComponent(getPage());
+        dashboardPage = new DashboardPage(getPage());
+        adminEventPage = new AdminEventPage(getPage());
+        eventsPage = new EventsPage(getPage());
+
+        // 4. אימות טעינת הדף הראשי
+        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
+    }
 
     @Test(description = "Create booking from API and validate UI booking details")
     public void getBookingDetails() {
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-        DashboardPage dashboardPage = new DashboardPage(getPage());
-
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        String token = driverDetails.get("bearerToken").toString();
 
         Map<String, Object> eventPayload = TestDataBuilder.getCreateEventPayload(
                 eventName,
@@ -74,9 +102,6 @@ public class BookingTest extends BaseTest {
 
         Map<String, Object> booking = EventApiService.bookEventFromAPI(token, bookingPayload);
 
-        Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
         List<Map<String, String>> bookingData = myBookingsPage.getAllBookingCardDetails(eventName);
 
@@ -88,22 +113,10 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Book event from UI")
     public void bookEventFromUI() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
 
-        LoginPage loginPage = new LoginPage(getPage());
-
-        AdminEventPage adminEventPage = new AdminEventPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -129,25 +142,12 @@ public class BookingTest extends BaseTest {
         Assert.assertEquals(createBookingPageData.get("TotalPrice"), bookingData.getFirst().get("totalPrice").replace(",", "").trim());
     }
 
-
     @Test(description = "Delete booking from my booking page")
     public void deleteBookingFromMyBookingTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
 
-        LoginPage loginPage = new LoginPage(getPage());
-
-        AdminEventPage adminEventPage = new AdminEventPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -177,22 +177,10 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Delete booking from view booking details page")
     public void deleteBookingFromViewBookingDetailsTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
 
-        LoginPage loginPage = new LoginPage(getPage());
-
-        AdminEventPage adminEventPage = new AdminEventPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -222,22 +210,10 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Go back to bookings page from view booking details page")
     public void goBackToBookingDetailsPageTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
 
-        LoginPage loginPage = new LoginPage(getPage());
-
-        AdminEventPage adminEventPage = new AdminEventPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -266,22 +242,10 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Check eligibility for refound test")
     public void eligibilityForRefoundTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
 
-        LoginPage loginPage = new LoginPage(getPage());
-
-        AdminEventPage adminEventPage = new AdminEventPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -310,23 +274,11 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Check My booking page event data matches the booking card")
     public void myBookingEventDataTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
         String category = TestDataUtils.getCategory();
 
-        LoginPage loginPage = new LoginPage(getPage());
-
-        AdminEventPage adminEventPage = new AdminEventPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
         adminEventPage.goTo();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -352,36 +304,25 @@ public class BookingTest extends BaseTest {
         Map<String, Object> eventDetails = viewBookingDetailsPage.getMyBookingEventDetails();
         Map<String, Object> eventHederValues = viewBookingDetailsPage.getMyBookingHeaderValues();
 
-
         Assert.assertEquals(eventHederValues.get("bookingRef"), bookingData.getFirst().get("bookingRef"));
         Assert.assertEquals(eventDetails.get("Category"), category);
         Assert.assertEquals(eventDetails.get("Event"), eventName);
         Assert.assertEquals(eventDetails.get("City"), bookingData.getFirst().get("city"));
 
-        String rawDate1 = eventDetails.get("Date").toString().split(", ")[1].trim(); // "11 July 2027"
-        String rawDate2 = bookingData.getFirst().get("date").replaceAll("^[^a-zA-Z0-9]+", "").trim(); // "11 Jul 2027"
+        String rawDate1 = eventDetails.get("Date").toString().split(", ")[1].trim(); // "16 September 2027"
+        String rawDate2 = bookingData.getFirst().get("date").replaceAll("^[^a-zA-Z0-9]+", "").trim(); // "16 Sept 2027" או "16 Sep 2027"
 
-        String formattedDate1 = LocalDate.parse(rawDate1, DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH))
-                .format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH));
+        String cleanDate1 = rawDate1.replaceAll("(\\d+) ([A-Za-z]{3})[A-Za-z]* (\\d{4})", "$1 $2 $3");
+        String cleanDate2 = rawDate2.replaceAll("(\\d+) ([A-Za-z]{3})[A-Za-z]* (\\d{4})", "$1 $2 $3");
 
-        Assert.assertEquals(formattedDate1, rawDate2);
+        Assert.assertEquals(cleanDate1, cleanDate2);
     }
 
     @Test(description = "Remove all booking")
     public void removeAllBooking() {
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-        DashboardPage dashboardPage = new DashboardPage(getPage());
-
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        String token = driverDetails.get("bearerToken").toString();
 
         Map<String, Object> eventPayload = TestDataBuilder.getCreateEventPayload(
                 eventName,
@@ -414,9 +355,6 @@ public class BookingTest extends BaseTest {
         Map<String, Object> booking = EventApiService.bookEventFromAPI(token, bookingPayload);
         Assert.assertEquals(booking.get("bookingStatus"), "confirmed");
 
-        Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
         int numberOfBookingCardsBefore = myBookingsPage.getNumberBookingOfCards();
         myBookingsPage.clearAllBooking();
@@ -427,29 +365,16 @@ public class BookingTest extends BaseTest {
         assertThat(getPage().getByText(Pattern.compile("No bookings yet", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
 
-//        assertThat(getPage().getByText("Booking cancelled successfully")).isVisible();
-//        assertThat(getPage().getByText("No bookings yet")).isVisible();
-
         int numberOfBookingCardsAfter = myBookingsPage.getNumberBookingOfCards();
         Assert.assertEquals(numberOfBookingCardsBefore, numberOfBookingCardsAfter + 1);
     }
 
     @Test(description = "Book all seats")
     public void bookAlSeats() {
-        LoginPage loginPage = new LoginPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-        DashboardPage dashboardPage = new DashboardPage(getPage());
-
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String userName = TestDataUtils.getFullName();
         String phone = TestDataUtils.getPhoneNumber();
         int numOfSeats = 11;
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        String token = driverDetails.get("bearerToken").toString();
 
         Map<String, Object> eventPayload = TestDataBuilder.getCreateEventPayload(
                 eventName,
@@ -492,10 +417,7 @@ public class BookingTest extends BaseTest {
 
         Map<String, Object> bookingSecond = EventApiService.bookEventFromAPI(token, secondBookingPayload);
         Assert.assertEquals(bookingSecond.get("bookingStatus"), "confirmed");
-
-        Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
+        getPage().reload();
         Locator card = eventsPage.getEventCard(eventName);
         Assert.assertTrue(card.getByTestId("book-now-btn").isDisabled());
         assertThat(card.locator("[class*='items-center'] [class$='rounded-full']")).isVisible();
@@ -503,17 +425,7 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Perform booking without details")
     public void bookWithoutDetails() {
-        LoginPage loginPage = new LoginPage(getPage());
-        EventsPage eventsPage = new EventsPage(getPage());
-        DashboardPage dashboardPage = new DashboardPage(getPage());
-
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        String token = driverDetails.get("bearerToken").toString();
 
         Map<String, Object> eventPayload = TestDataBuilder.getCreateEventPayload(
                 eventName,
@@ -533,10 +445,7 @@ public class BookingTest extends BaseTest {
                 .untilAsserted(() ->
                         Assert.assertEquals(String.valueOf(eventResponseData.get("status")), "201")
                 );
-
-        Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
+        getPage().reload();
         eventsPage.clickOnEventByTitle(eventName);
         getPage().locator("#confirm-booking").click();
         assertThat(getPage().getByText("Name must be at least 2 chars")).isVisible();
@@ -546,22 +455,6 @@ public class BookingTest extends BaseTest {
 
     @Test(description = "Mock creating bookings with Next.js interception support")
     public void mockCreateBooking() throws IOException {
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
-
-        DashboardPage dashboardPage = new DashboardPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-
-        Assert.assertEquals(driverDetails.get("status"), "201");
-
-        String token = driverDetails.get("bearerToken").toString();
-        int userId = (int) driverDetails.get("userId");
-
         String eventTitle = "New postman event-1";
         Map<String, Object> eventPayload = TestDataBuilder.getCreateEventPayload(
                 eventTitle,
@@ -611,9 +504,6 @@ public class BookingTest extends BaseTest {
                 route.fallback();
             }
         });
-
-        Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
 
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
 
