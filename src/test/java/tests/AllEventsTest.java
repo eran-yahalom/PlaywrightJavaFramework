@@ -4,11 +4,10 @@ import api.EventApiService;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.assertions.LocatorAssertions;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import pages.AdminEventPage;
-import pages.DashboardPage;
 import pages.HeaderComponent;
-import pages.LoginPage;
 import utils.TestDataBuilder;
 import utils.TestDataUtils;
 
@@ -19,62 +18,54 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 public class AllEventsTest extends BaseTest {
 
-    @Test(description = "Count all starter events rows")
-    public void countStaterEventRows() {
+    private AdminEventPage adminEventPage;
+
+    @BeforeMethod
+    public void setupNewDriverAndFastLogin() {
         String email = TestDataUtils.getEmail();
         String password = TestDataUtils.getPassword();
 
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
+        // 1. הרשמת משתמש/דרייבר חדש ב-API
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
         Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-
         Assert.assertNotNull(driverDetails, "driverDetails is null");
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-        AdminEventPage adminEventPage = headerComponent.clickManageEvents();
+
+        String token = (String) driverDetails.get("bearerToken");
+
+        if (token != null) {
+            // 2. הזרקת ה-Token ישירות כמחרוזת Java לפני טעינת הדף
+            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
+
+            // 3. ניווט ל-URL – הדף נטען כשה-Token כבר קיים ב-localStorage
+            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+        }
+
+        // 4. לחיצה על Manage Events
+        HeaderComponent headerComponent = new HeaderComponent(getPage());
+        adminEventPage = headerComponent.clickManageEvents();
+    }
+
+    @Test(description = "Count all starter events rows")
+    public void countStaterEventRows1() {
+        int eventRows = adminEventPage.countEventRows();
+        Assert.assertEquals(eventRows, 3, "event rows don't match");
+    }
+
+    @Test(description = "Count all starter events rows")
+    public void countStaterEventRows() {
         int eventRows = adminEventPage.countEventRows();
         Assert.assertEquals(eventRows, 3, "event rows don't match");
     }
 
     @Test(description = "Cant delete starter events rows")
     public void cantDeleteStaterEventRows() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
-
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-        AdminEventPage adminEventPage = headerComponent.clickManageEvents();
         int eventRowsDeleteButtonCount = adminEventPage.countEventsDeleteButtons();
         Assert.assertEquals(eventRowsDeleteButtonCount, 0, "count after delete is not correct");
     }
 
     @Test(description = "Add new event and see it in all events")
     public void seeNewEventInAllEventsRows() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-        AdminEventPage adminEventPage = headerComponent.clickManageEvents();
         int eventRowsBeforeAdding = adminEventPage.countEventRows();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -104,20 +95,7 @@ public class AllEventsTest extends BaseTest {
 
     @Test(description = "Delete new new event and see it removed all events")
     public void deleteNewEventFromEventsRow() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-        AdminEventPage adminEventPage = headerComponent.clickManageEvents();
         int eventRowsBeforeAdding = adminEventPage.countEventRows();
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
@@ -143,22 +121,7 @@ public class AllEventsTest extends BaseTest {
 
     @Test(description = "edit new new event successfully")
     public void editNewEvent() {
-
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-        AdminEventPage adminEventPage = headerComponent.clickManageEvents();
-
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
                 TestDataUtils.getCategory(),
@@ -194,21 +157,7 @@ public class AllEventsTest extends BaseTest {
 
     @Test(description = "Event data remains the same after close edit without editing")
     public void closeWithoutEditingTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-
-        LoginPage loginPage = new LoginPage(getPage());
-        HeaderComponent headerComponent = new HeaderComponent(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
-        Assert.assertNotNull(driverDetails);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-        AdminEventPage adminEventPage = headerComponent.clickManageEvents();
-
         adminEventPage.createNewEvent(eventName,
                 TestDataUtils.getRandomEventTitle(),
                 TestDataUtils.getCategory(),
