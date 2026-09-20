@@ -4,8 +4,12 @@ import api.EventApiService;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import pages.*;
+import pages.AdminEventPage;
+import pages.DashboardPage;
+import pages.EventsPage;
+import pages.UpcomingEventsPage;
 import utils.TestDataBuilder;
 import utils.TestDataUtils;
 
@@ -15,19 +19,40 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 public class UpcomingEventsTest extends BaseTest {
 
-    @Test(description = "Change filters and see that clear filters button is visible")
-    public void clearFilterTest() {
+    private DashboardPage dashboardPage;
+    private UpcomingEventsPage upcomingEventsPage;
+
+    @BeforeMethod
+    public void setupNewDriverAndFastLogin() {
         String email = TestDataUtils.getEmail();
         String password = TestDataUtils.getPassword();
 
-        LoginPage loginPage = new LoginPage(getPage());
-        UpcomingEventsPage upcomingEventsPage = new UpcomingEventsPage(getPage());
-
+        // 1. הרשמת משתמש/דרייבר חדש ב-API
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Assert.assertNotNull(driverDetails, "driverDetails is null");
 
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
+        String token = (String) driverDetails.get("bearerToken");
+
+        if (token != null) {
+            // 2. הזרקת ה-Token ישירות כמחרוזת Java לפני טעינת הדף
+            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
+
+            // 3. ניווט ל-URL – הדף נטען כשה-Token כבר קיים ב-localStorage
+            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+        }
+
+        // 4. לחיצה על Manage Events
+        dashboardPage = new DashboardPage(getPage());
+        upcomingEventsPage = new UpcomingEventsPage(getPage());
+
+        // 5. אימות שהדף נטען
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
+    }
+
+
+    @Test(description = "Change filters and see that clear filters button is visible")
+    public void clearFilterTest() {
         assertThat(getPage().getByRole(AriaRole.LINK,
                 new Page.GetByRoleOptions().setName("Browse Events →"))).isVisible();
         getPage().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Browse Events →")).click();
@@ -38,18 +63,6 @@ public class UpcomingEventsTest extends BaseTest {
 
     @Test(description = "Clear filters button and see that button is not visible")
     public void clickOnClearFilterTest() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
-
-        LoginPage loginPage = new LoginPage(getPage());
-        UpcomingEventsPage upcomingEventsPage = new UpcomingEventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         assertThat(getPage().getByRole(AriaRole.LINK,
                 new Page.GetByRoleOptions().setName("Browse Events →"))).isVisible();
         getPage().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Browse Events →")).click();
@@ -64,17 +77,6 @@ public class UpcomingEventsTest extends BaseTest {
 
     @Test(description = "Check that invalid search well show no results")
     public void noResultsFilter() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
-
-        LoginPage loginPage = new LoginPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         UpcomingEventsPage upcomingEventsPage = dashboardPage.clickOnEventsTopLink();
         upcomingEventsPage.fillEventsSearchField("No results");
 
@@ -84,18 +86,7 @@ public class UpcomingEventsTest extends BaseTest {
 
     @Test(description = "filter cards by category")
     public void filterByCategory() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
-
-        LoginPage loginPage = new LoginPage(getPage());
         EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         UpcomingEventsPage upcomingEventsPage = dashboardPage.clickOnEventsTopLink();
         int countCardsContainingSearchTextBeforeSearch = eventsPage.countCardsThatContainsText("Concert").count();
         upcomingEventsPage.selectCategory("Concert");
@@ -108,18 +99,7 @@ public class UpcomingEventsTest extends BaseTest {
 
     @Test(description = "filter events by event name")
     public void filterByEventName() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
-
-        LoginPage loginPage = new LoginPage(getPage());
         EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         UpcomingEventsPage upcomingEventsPage = dashboardPage.clickOnEventsTopLink();
         int cardsBeforeFilter = eventsPage.countCardsThatContainsText("Dilli Diwali Mela").count();
         upcomingEventsPage.fillEventsSearchField("Dilli Diwali Mela");
@@ -129,20 +109,9 @@ public class UpcomingEventsTest extends BaseTest {
 
     @Test(description = "Filter events by city, add event,filter again and see events inc")
     public void filterByCity() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
         String city = "Delhi";
-
-        LoginPage loginPage = new LoginPage(getPage());
         EventsPage eventsPage = new EventsPage(getPage());
-
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-
-        DashboardPage dashboardPage = loginPage.loginToApp(email, password);
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
-
         UpcomingEventsPage upcomingEventsPage = dashboardPage.clickOnEventsTopLink();
         upcomingEventsPage.selectCity("Delhi");
         int cardsAfterFirstFilter = eventsPage.countCardsThatContainsText("Delhi").count();
