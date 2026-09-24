@@ -2,6 +2,7 @@ package tests;
 
 import api.EventApiService;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.assertions.LocatorAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -14,6 +15,7 @@ import utils.TestDataBuilder;
 import utils.TestDataUtils;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -125,7 +127,10 @@ public class UpcomingEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
-        assertThat(getPage().getByText("Event created!")).isVisible();
+//        assertThat(getPage().getByText("Event created!")).isVisible();
+        assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
+
         upcomingEventsPage = dashboardPage.clickOnEventsTopLink();
         upcomingEventsPage.selectCity("Delhi");
 

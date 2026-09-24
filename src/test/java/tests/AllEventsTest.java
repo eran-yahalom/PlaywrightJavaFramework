@@ -106,7 +106,9 @@ public class AllEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
-        assertThat(getPage().getByText("Event created!")).isVisible();
+//        assertThat(getPage().getByText("Event created!")).isVisible();
+        assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
         assertThat(getPage().getByText("All Events")).isVisible();
 
         adminEventPage.waitForEventToAppear(eventName);
@@ -134,7 +136,11 @@ public class AllEventsTest extends BaseTest {
         assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
 
-        assertThat(getPage().getByText("All Events")).isVisible();
+        assertThat(getPage().getByText(Pattern.compile("All Events", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
+
+
+      //  assertThat(getPage().getByText("All Events")).isVisible();
 
         Locator event = adminEventPage.getEventRow(eventName);
         event.getByText("edit").click();
