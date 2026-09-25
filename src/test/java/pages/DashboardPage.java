@@ -13,12 +13,7 @@ public class DashboardPage {
     }
 
     public Locator getDiscoverTextLocator() {
-        Locator locator = page.getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE));
-        locator.waitFor(new Locator.WaitForOptions()
-                .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(15000)); // Waits up to 10 seconds
-
-        return locator;
+        return page.getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE));
     }
 
     public boolean isUserLoggedIn() {

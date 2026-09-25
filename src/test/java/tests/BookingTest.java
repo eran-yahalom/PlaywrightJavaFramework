@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Route;
 import com.microsoft.playwright.assertions.LocatorAssertions;
+import com.microsoft.playwright.assertions.PageAssertions;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -64,8 +65,8 @@ public class BookingTest extends BaseTest {
         adminEventPage = new AdminEventPage(getPage());
         eventsPage = new EventsPage(getPage());
 
-        // 4. אימות טעינת הדף הראשי
-        assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
+        assertThat(dashboardPage.getDiscoverTextLocator())
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(15000));
     }
 
     @Test(description = "Create booking from API and validate UI booking details")
