@@ -1,9 +1,11 @@
 package tests;
 
 import api.EventApiService;
+import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Route;
 import com.microsoft.playwright.assertions.LocatorAssertions;
+import com.microsoft.playwright.assertions.PageAssertions;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -26,6 +28,11 @@ import static org.awaitility.Awaitility.await;
 
 public class BookingTest extends BaseTest {
 
+    private String email;
+    private String password;
+    private String token;
+    private int userId;
+
     private HeaderComponent headerComponent;
     private DashboardPage dashboardPage;
     private AdminEventPage adminEventPage;
@@ -33,16 +40,33 @@ public class BookingTest extends BaseTest {
 
     @BeforeMethod
     public void setupNewDriverAndFastLogin() {
-        // 1. קריאה למתודה המשותפת שמבצעת API Register, מחלצת Token ומזריקה לדפדפן
-        // מתודה זו מאתחלת את המשתנים email, password, token ו-userId המוגדרים כ-protected ב-BaseTest
-        performFastLogin();
+        email = TestDataUtils.getEmail();
+        password = TestDataUtils.getPassword();
 
-        // 2. אתחול האובייקטים המשותפים למחלקת ה-Booking
+        // 1. הרשמת משתמש חדש דרך API
+        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Assert.assertNotNull(driverDetails, "driverDetails is null");
+
+        token = driverDetails.get("bearerToken") != null ? driverDetails.get("bearerToken").toString() : null;
+        if (driverDetails.containsKey("userId") && driverDetails.get("userId") != null) {
+            userId = (int) driverDetails.get("userId");
+        }
+
+        if (token != null) {
+            // 2. הזרקת הטוקן ל-localStorage לחיבור מהיר לפני ניווט
+            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
+            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+        }
+
+        // 3. אתחול האובייקטים המשותפים
         headerComponent = new HeaderComponent(getPage());
         dashboardPage = new DashboardPage(getPage());
         adminEventPage = new AdminEventPage(getPage());
         eventsPage = new EventsPage(getPage());
 
+        //   assertThat(dashboardPage.getDiscoverTextLocator())
+//                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(15000));
         assertThat(getPage().getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
     }
@@ -62,7 +86,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -79,7 +103,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> booking = EventApiService.bookEventFromAPI(getPage().request(), token, bookingPayload);
+        Map<String, Object> booking = EventApiService.bookEventFromAPI(token, bookingPayload);
 
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
         List<Map<String, String>> bookingData = myBookingsPage.getAllBookingCardDetails(eventName);
@@ -288,8 +312,8 @@ public class BookingTest extends BaseTest {
         Assert.assertEquals(eventDetails.get("Event"), eventName);
         Assert.assertEquals(eventDetails.get("City"), bookingData.getFirst().get("city"));
 
-        String rawDate1 = eventDetails.get("Date").toString().split(", ")[1].trim();
-        String rawDate2 = bookingData.getFirst().get("date").replaceAll("^[^a-zA-Z0-9]+", "").trim();
+        String rawDate1 = eventDetails.get("Date").toString().split(", ")[1].trim(); // "16 September 2027"
+        String rawDate2 = bookingData.getFirst().get("date").replaceAll("^[^a-zA-Z0-9]+", "").trim(); // "16 Sept 2027" או "16 Sep 2027"
 
         String cleanDate1 = rawDate1.replaceAll("(\\d+) ([A-Za-z]{3})[A-Za-z]* (\\d{4})", "$1 $2 $3");
         String cleanDate2 = rawDate2.replaceAll("(\\d+) ([A-Za-z]{3})[A-Za-z]* (\\d{4})", "$1 $2 $3");
@@ -314,7 +338,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -331,7 +355,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> booking = EventApiService.bookEventFromAPI(getPage().request(), token, bookingPayload);
+        Map<String, Object> booking = EventApiService.bookEventFromAPI(token, bookingPayload);
         Assert.assertEquals(booking.get("bookingStatus"), "confirmed");
 
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
@@ -366,7 +390,7 @@ public class BookingTest extends BaseTest {
                 numOfSeats
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -383,7 +407,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> booking = EventApiService.bookEventFromAPI(getPage().request(), token, firstBookingPayload);
+        Map<String, Object> booking = EventApiService.bookEventFromAPI(token, firstBookingPayload);
         Assert.assertEquals(booking.get("bookingStatus"), "confirmed");
 
         Map<String, Object> secondBookingPayload = TestDataBuilder.getCreateBookingPayload(
@@ -394,7 +418,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> bookingSecond = EventApiService.bookEventFromAPI(getPage().request(), token, secondBookingPayload);
+        Map<String, Object> bookingSecond = EventApiService.bookEventFromAPI(token, secondBookingPayload);
         Assert.assertEquals(bookingSecond.get("bookingStatus"), "confirmed");
         getPage().reload();
         Locator card = eventsPage.getEventCard(eventName);
@@ -417,7 +441,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> eventResponseData = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
+        Map<String, Object> eventResponseData = EventApiService.createEventFromAPI(token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -446,7 +470,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -477,18 +501,18 @@ public class BookingTest extends BaseTest {
                 route.fulfill(new Route.FulfillOptions()
                         .setStatus(200)
                         .setContentType("application/json")
-                        .setBody(updatedJson)
-                        .setHeaders(MockConstants.CORS_HEADERS));
+                        .setHeaders(MockConstants.CORS_HEADERS)
+                        .setBody(updatedJson));
             } else {
-                route.resume();
+                route.fallback();
             }
         });
 
-        getPage().reload();
-        headerComponent.goToMyBookings();
-        MyBookingsPage myBookingsPage = new MyBookingsPage(getPage());
-        int numCards = myBookingsPage.getNumberBookingOfCards();
+        MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
 
-        Assert.assertEquals(numCards, 2);
+        List<Map<String, String>> bookingData = myBookingsPage.getAllBookingCardDetails(eventTitle);
+
+        Assert.assertEquals(bookingData.getFirst().get("bookingRef"), JsonPath.read(jsonContent, "$.data[0].bookingRef"));
+        Assert.assertEquals(bookingData.getLast().get("bookingRef"), JsonPath.read(jsonContent, "$.data[1].bookingRef"));
     }
 }

@@ -1,31 +1,29 @@
 package tests;
 
-import api.EventApiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import io.qameta.allure.Allure;
-import org.testng.Assert;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
-import utils.TestDataBuilder;
-import utils.TestDataUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Properties;
 
-public abstract class BaseTest {
+public class BaseTest {
 
+    // 1. Playwright & Browser נשמרים ברמת ה-Thread לשימוש חוזר לאורך כל המחלקה
     private static final ThreadLocal<Playwright> playwrightTL = new ThreadLocal<>();
     private static final ThreadLocal<Browser> browserTL = new ThreadLocal<>();
+
+    // 2. Context & Page מוקמים מחדש לכל טסט בנפרד (מבטיח בידוד מוחלט וריצה מהירה)
     private static final ThreadLocal<BrowserContext> contextTL = new ThreadLocal<>();
     private static final ThreadLocal<Page> pageTL = new ThreadLocal<>();
 
@@ -33,12 +31,6 @@ public abstract class BaseTest {
     protected String env;
     protected JsonNode envData;
     protected static Properties prop = new Properties();
-
-    // משתנים משותפים עבור Fast Login
-    protected String token;
-    protected int userId;
-    protected String email;
-    protected String password;
 
     public Page getPage() {
         return pageTL.get();
@@ -58,6 +50,7 @@ public abstract class BaseTest {
 
     @BeforeSuite(alwaysRun = true)
     public void beforeSuite() throws IOException {
+        // טעינת config.properties פעם אחת בלבד לפני תחילת הריצה
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
             if (input != null) {
                 prop.load(input);
@@ -67,12 +60,11 @@ public abstract class BaseTest {
                 }
             }
         }
-        // הגדרת Timeout גלובלי ל-Assertions פעם אחת ברמת הסוויטה
-        PlaywrightAssertions.setDefaultAssertionTimeout(10000);
     }
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws IOException {
+        // 1. Resolve environment & config
         String envFromCli = System.getProperty("env");
         env = (envFromCli != null && !envFromCli.trim().isEmpty())
                 ? envFromCli.trim()
@@ -86,6 +78,7 @@ public abstract class BaseTest {
             base_url = prop.getProperty("qa.base.url");
         }
 
+        // 2. Lazy Initialization: פתיחת Browser & Playwright פעם אחת בלבד ל-Thread
         if (playwrightTL.get() == null) {
             Playwright playwright = Playwright.create();
             playwrightTL.set(playwright);
@@ -113,32 +106,20 @@ public abstract class BaseTest {
             browserTL.set(browser);
         }
 
+        // 3. יצירת Context ו-Page חדשים ונקיים לכל טסט (~50ms בלבד)
         BrowserContext context = browserTL.get().newContext();
         Page page = context.newPage();
 
         contextTL.set(context);
         pageTL.set(page);
-    }
 
-    /**
-     * הרשמת משתמש חדש דרך API והזרקת Token ל-localStorage (מרוכז במקום אחד)
-     */
-    protected void performFastLogin() {
-        email = TestDataUtils.getEmail();
-        password = TestDataUtils.getPassword();
+        // הגדלת דיפולט ה-Timeout מ-2000ms ל-5000ms למניעת Flaky Tests ב-CI
+        PlaywrightAssertions.setDefaultAssertionTimeout(5000);
 
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        token = driverDetails.get("bearerToken") != null ? driverDetails.get("bearerToken").toString() : null;
-        if (driverDetails.containsKey("userId") && driverDetails.get("userId") != null) {
-            userId = (int) driverDetails.get("userId");
-        }
-
-        if (token != null) {
-            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
-            getPage().navigate(base_url != null ? base_url : "https://eventhub.rahulshettyacademy.com/");
+        if (base_url != null && !base_url.isEmpty()) {
+            getPage().navigate(base_url);
+        } else {
+            throw new IllegalStateException("base_url is null or empty. Check environments.json or config.properties.");
         }
     }
 
@@ -175,26 +156,23 @@ public abstract class BaseTest {
                     System.err.println("Failed to capture screenshot for Allure: " + e.getMessage());
                 }
             }
+
+            if (pageTL.get() != null) pageTL.get().close();
+            if (contextTL.get() != null) contextTL.get().close();
         } finally {
-            if (pageTL.get() != null) {
-                try { pageTL.get().close(); } catch (Exception ignored) {}
-                pageTL.remove();
-            }
-            if (contextTL.get() != null) {
-                try { contextTL.get().close(); } catch (Exception ignored) {}
-                contextTL.remove();
-            }
+            pageTL.remove();
+            contextTL.remove();
         }
     }
 
     @AfterClass(alwaysRun = true)
     public void tearDownClass() {
         if (browserTL.get() != null) {
-            try { browserTL.get().close(); } catch (Exception ignored) {}
+            browserTL.get().close();
             browserTL.remove();
         }
         if (playwrightTL.get() != null) {
-            try { playwrightTL.get().close(); } catch (Exception ignored) {}
+            playwrightTL.get().close();
             playwrightTL.remove();
         }
     }

@@ -1,5 +1,6 @@
 package tests;
 
+import api.EventApiService;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.assertions.LocatorAssertions;
 import org.testng.Assert;
@@ -7,6 +8,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import pages.AdminEventPage;
 import pages.HeaderComponent;
+import utils.TestDataBuilder;
 import utils.TestDataUtils;
 
 import java.util.Map;
@@ -20,10 +22,25 @@ public class AllEventsTest extends BaseTest {
 
     @BeforeMethod
     public void setupNewDriverAndFastLogin() {
-        // 1. קריאה למתודה המשותפת שמבצעת API Register, מחלצת Token ומזריקה לדפדפן
-        performFastLogin();
+        String email = TestDataUtils.getEmail();
+        String password = TestDataUtils.getPassword();
 
-        // 2. לחיצה על Manage Events ואתחול Page Objects
+        // 1. הרשמת משתמש/דרייבר חדש ב-API
+        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Assert.assertNotNull(driverDetails, "driverDetails is null");
+
+        String token = (String) driverDetails.get("bearerToken");
+
+        if (token != null) {
+            // 2. הזרקת ה-Token ישירות כמחרוזת Java לפני טעינת הדף
+            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
+
+            // 3. ניווט ל-URL – הדף נטען כשה-Token כבר קיים ב-localStorage
+            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+        }
+
+        // 4. לחיצה על Manage Events
         HeaderComponent headerComponent = new HeaderComponent(getPage());
         adminEventPage = headerComponent.clickManageEvents();
     }
@@ -89,6 +106,7 @@ public class AllEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
+//        assertThat(getPage().getByText("Event created!")).isVisible();
         assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
         assertThat(getPage().getByText("All Events")).isVisible();
@@ -120,6 +138,9 @@ public class AllEventsTest extends BaseTest {
 
         assertThat(getPage().getByText(Pattern.compile("All Events", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
+
+
+        //  assertThat(getPage().getByText("All Events")).isVisible();
 
         Locator event = adminEventPage.getEventRow(eventName);
         event.getByText("edit").click();
@@ -169,5 +190,8 @@ public class AllEventsTest extends BaseTest {
         assertThat(card.locator("td>span").first()).hasText(eventName);
         assertThat(card.locator("td>span").nth(1)).hasText((String) uneditedData.get("category"));
         assertThat(card.locator("td:nth-child(3)").first()).hasText((String) uneditedData.get("city"));
+//        Assert.assertEquals(card.locator("td>span").first().innerText(), eventName, "Event names don't match");
+//        Assert.assertEquals(card.locator("td>span").nth(1).innerText(), uneditedData.get("category"), "Category doesn't match");
+//        Assert.assertEquals(card.locator("td:nth-child(3)").first().innerText(), uneditedData.get("city"), "City doesn't match");
     }
 }

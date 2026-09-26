@@ -31,7 +31,7 @@ public class UpcomingEventsTest extends BaseTest {
 
         // 1. הרשמת משתמש/דרייבר חדש ב-API
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
         Assert.assertNotNull(driverDetails, "driverDetails is null");
 
         String token = (String) driverDetails.get("bearerToken");
@@ -96,6 +96,7 @@ public class UpcomingEventsTest extends BaseTest {
 
         Assert.assertEquals(countCardsContainingSearchTextBeforeSearch, countCardsContainingSearchTextAfterSearch);
         assertThat(upcomingEventsPage.getEventCardsLocator()).hasCount(countCardsContainingSearchTextAfterSearch);
+        //get cards name texts: cards.nth(0).locator(".p-4>a").innerText()
     }
 
     @Test(description = "filter events by event name")
@@ -126,6 +127,7 @@ public class UpcomingEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
+//        assertThat(getPage().getByText("Event created!")).isVisible();
         assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
 
