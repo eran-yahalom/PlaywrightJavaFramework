@@ -1,6 +1,5 @@
 package tests;
 
-import api.EventApiService;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.assertions.LocatorAssertions;
 import org.testng.Assert;
@@ -8,7 +7,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import pages.AdminEventPage;
 import pages.HeaderComponent;
-import utils.TestDataBuilder;
 import utils.TestDataUtils;
 
 import java.util.Map;
@@ -22,25 +20,10 @@ public class AllEventsTest extends BaseTest {
 
     @BeforeMethod
     public void setupNewDriverAndFastLogin() {
-        String email = TestDataUtils.getEmail();
-        String password = TestDataUtils.getPassword();
+        // 1. קריאה למתודה המשותפת שמבצעת API Register, מחלצת Token ומזריקה לדפדפן
+        performFastLogin();
 
-        // 1. הרשמת משתמש/דרייבר חדש ב-API
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        String token = (String) driverDetails.get("bearerToken");
-
-        if (token != null) {
-            // 2. הזרקת ה-Token ישירות כמחרוזת Java לפני טעינת הדף
-            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
-
-            // 3. ניווט ל-URL – הדף נטען כשה-Token כבר קיים ב-localStorage
-            getPage().navigate(base_url != null ? base_url : "https://eventhub.rahulshettyacademy.com/");
-        }
-
-        // 4. לחיצה על Manage Events
+        // 2. לחיצה על Manage Events ואתחול Page Objects
         HeaderComponent headerComponent = new HeaderComponent(getPage());
         adminEventPage = headerComponent.clickManageEvents();
     }

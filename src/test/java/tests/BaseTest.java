@@ -1,23 +1,28 @@
 package tests;
 
+import api.EventApiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import io.qameta.allure.Allure;
+import org.testng.Assert;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
+import utils.TestDataBuilder;
+import utils.TestDataUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
 
-public class BaseTest {
+public abstract class BaseTest {
 
     private static final ThreadLocal<Playwright> playwrightTL = new ThreadLocal<>();
     private static final ThreadLocal<Browser> browserTL = new ThreadLocal<>();
@@ -28,6 +33,12 @@ public class BaseTest {
     protected String env;
     protected JsonNode envData;
     protected static Properties prop = new Properties();
+
+    // משתנים משותפים עבור Fast Login
+    protected String token;
+    protected int userId;
+    protected String email;
+    protected String password;
 
     public Page getPage() {
         return pageTL.get();
@@ -56,6 +67,8 @@ public class BaseTest {
                 }
             }
         }
+        // הגדרת Timeout גלובלי ל-Assertions פעם אחת ברמת הסוויטה
+        PlaywrightAssertions.setDefaultAssertionTimeout(10000);
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -105,9 +118,28 @@ public class BaseTest {
 
         contextTL.set(context);
         pageTL.set(page);
+    }
 
-        // העלאת ה-Assertion Timeout ל-10 שניות למניעת Flaky Tests בריצה מקבילית עמוסה
-        PlaywrightAssertions.setDefaultAssertionTimeout(10000);
+    /**
+     * הרשמת משתמש חדש דרך API והזרקת Token ל-localStorage (מרוכז במקום אחד)
+     */
+    protected void performFastLogin() {
+        email = TestDataUtils.getEmail();
+        password = TestDataUtils.getPassword();
+
+        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
+        Assert.assertNotNull(driverDetails, "driverDetails is null");
+
+        token = driverDetails.get("bearerToken") != null ? driverDetails.get("bearerToken").toString() : null;
+        if (driverDetails.containsKey("userId") && driverDetails.get("userId") != null) {
+            userId = (int) driverDetails.get("userId");
+        }
+
+        if (token != null) {
+            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
+            getPage().navigate(base_url != null ? base_url : "https://eventhub.rahulshettyacademy.com/");
+        }
     }
 
     private void loadEnvironmentConfig(String targetEnv) {
@@ -143,23 +175,26 @@ public class BaseTest {
                     System.err.println("Failed to capture screenshot for Allure: " + e.getMessage());
                 }
             }
-
-            if (pageTL.get() != null) pageTL.get().close();
-            if (contextTL.get() != null) contextTL.get().close();
         } finally {
-            pageTL.remove();
-            contextTL.remove();
+            if (pageTL.get() != null) {
+                try { pageTL.get().close(); } catch (Exception ignored) {}
+                pageTL.remove();
+            }
+            if (contextTL.get() != null) {
+                try { contextTL.get().close(); } catch (Exception ignored) {}
+                contextTL.remove();
+            }
         }
     }
 
     @AfterClass(alwaysRun = true)
     public void tearDownClass() {
         if (browserTL.get() != null) {
-            browserTL.get().close();
+            try { browserTL.get().close(); } catch (Exception ignored) {}
             browserTL.remove();
         }
         if (playwrightTL.get() != null) {
-            playwrightTL.get().close();
+            try { playwrightTL.get().close(); } catch (Exception ignored) {}
             playwrightTL.remove();
         }
     }

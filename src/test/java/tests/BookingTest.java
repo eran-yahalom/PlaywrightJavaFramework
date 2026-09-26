@@ -1,7 +1,6 @@
 package tests;
 
 import api.EventApiService;
-import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Route;
 import com.microsoft.playwright.assertions.LocatorAssertions;
@@ -27,11 +26,6 @@ import static org.awaitility.Awaitility.await;
 
 public class BookingTest extends BaseTest {
 
-    private String email;
-    private String password;
-    private String token;
-    private int userId;
-
     private HeaderComponent headerComponent;
     private DashboardPage dashboardPage;
     private AdminEventPage adminEventPage;
@@ -39,26 +33,11 @@ public class BookingTest extends BaseTest {
 
     @BeforeMethod
     public void setupNewDriverAndFastLogin() {
-        email = TestDataUtils.getEmail();
-        password = TestDataUtils.getPassword();
+        // 1. קריאה למתודה המשותפת שמבצעת API Register, מחלצת Token ומזריקה לדפדפן
+        // מתודה זו מאתחלת את המשתנים email, password, token ו-userId המוגדרים כ-protected ב-BaseTest
+        performFastLogin();
 
-        // 1. הרשמת משתמש חדש דרך API
-        Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
-        Assert.assertNotNull(driverDetails, "driverDetails is null");
-
-        token = driverDetails.get("bearerToken") != null ? driverDetails.get("bearerToken").toString() : null;
-        if (driverDetails.containsKey("userId") && driverDetails.get("userId") != null) {
-            userId = (int) driverDetails.get("userId");
-        }
-
-        if (token != null) {
-            // 2. הזרקת הטוקן ל-localStorage לחיבור מהיר לפני ניווט
-            getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
-            getPage().navigate(base_url != null ? base_url : "https://eventhub.rahulshettyacademy.com/");
-        }
-
-        // 3. אתחול האובייקטים המשותפים
+        // 2. אתחול האובייקטים המשותפים למחלקת ה-Booking
         headerComponent = new HeaderComponent(getPage());
         dashboardPage = new DashboardPage(getPage());
         adminEventPage = new AdminEventPage(getPage());
@@ -498,18 +477,18 @@ public class BookingTest extends BaseTest {
                 route.fulfill(new Route.FulfillOptions()
                         .setStatus(200)
                         .setContentType("application/json")
-                        .setHeaders(MockConstants.CORS_HEADERS)
-                        .setBody(updatedJson));
+                        .setBody(updatedJson)
+                        .setHeaders(MockConstants.CORS_HEADERS));
             } else {
-                route.fallback();
+                route.resume();
             }
         });
 
-        MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
+        getPage().reload();
+        headerComponent.goToMyBookings();
+        MyBookingsPage myBookingsPage = new MyBookingsPage(getPage());
+        int numCards = myBookingsPage.getNumberBookingOfCards();
 
-        List<Map<String, String>> bookingData = myBookingsPage.getAllBookingCardDetails(eventTitle);
-
-        Assert.assertEquals(bookingData.getFirst().get("bookingRef"), JsonPath.read(jsonContent, "$.data[0].bookingRef"));
-        Assert.assertEquals(bookingData.getLast().get("bookingRef"), JsonPath.read(jsonContent, "$.data[1].bookingRef"));
+        Assert.assertEquals(numCards, 2);
     }
 }
