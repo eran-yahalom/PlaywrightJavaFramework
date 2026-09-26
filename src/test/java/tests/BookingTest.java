@@ -65,8 +65,10 @@ public class BookingTest extends BaseTest {
         adminEventPage = new AdminEventPage(getPage());
         eventsPage = new EventsPage(getPage());
 
-        assertThat(dashboardPage.getDiscoverTextLocator())
-                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(15000));
+        //   assertThat(dashboardPage.getDiscoverTextLocator())
+//                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(15000));
+        assertThat(getPage().getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE)))
+                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
     }
 
     @Test(description = "Create booking from API and validate UI booking details")
