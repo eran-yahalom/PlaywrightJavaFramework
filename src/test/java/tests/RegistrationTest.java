@@ -24,7 +24,7 @@ public class RegistrationTest extends BaseTest {
         LoginPage loginPage = new LoginPage(getPage());
         DashboardPage dashboardPage = new DashboardPage(getPage());
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         Assert.assertEquals(driverDetails.get("status"), "201");
         Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
@@ -35,8 +35,8 @@ public class RegistrationTest extends BaseTest {
     public void failRegisterViaAPI() {
         String password = TestDataUtils.getPassword();
         Map<String, Object> payload = TestDataBuilder.getLoginPayload("abc@yopmail.com", password);
-        Map<String, Object> driverDetails = EventApiService.registerInvalidDriverAPI(payload);
-        Assert.assertEquals(driverDetails.get("status"), "400");
+        Map<String, Object> driverDetails = EventApiService.registerInvalidDriverAPI(getPage().request(), payload);
+        Assert.assertEquals(driverDetails.get("status"), 400);
     }
 
     @Test(description = "Register with incorrect mail")
@@ -112,5 +112,3 @@ public class RegistrationTest extends BaseTest {
         assertThat(getPage().getByText(email)).isVisible();
     }
 }
-
-

@@ -5,7 +5,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Route;
 import com.microsoft.playwright.assertions.LocatorAssertions;
-import com.microsoft.playwright.assertions.PageAssertions;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -45,7 +44,7 @@ public class BookingTest extends BaseTest {
 
         // 1. הרשמת משתמש חדש דרך API
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
         Assert.assertNotNull(driverDetails, "driverDetails is null");
 
         token = driverDetails.get("bearerToken") != null ? driverDetails.get("bearerToken").toString() : null;
@@ -56,7 +55,7 @@ public class BookingTest extends BaseTest {
         if (token != null) {
             // 2. הזרקת הטוקן ל-localStorage לחיבור מהיר לפני ניווט
             getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
-            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+            getPage().navigate(base_url != null ? base_url : "https://eventhub.rahulshettyacademy.com/");
         }
 
         // 3. אתחול האובייקטים המשותפים
@@ -65,8 +64,6 @@ public class BookingTest extends BaseTest {
         adminEventPage = new AdminEventPage(getPage());
         eventsPage = new EventsPage(getPage());
 
-        //   assertThat(dashboardPage.getDiscoverTextLocator())
-//                .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(15000));
         assertThat(getPage().getByText(Pattern.compile("Discover", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
     }
@@ -86,7 +83,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -103,7 +100,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> booking = EventApiService.bookEventFromAPI(token, bookingPayload);
+        Map<String, Object> booking = EventApiService.bookEventFromAPI(getPage().request(), token, bookingPayload);
 
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
         List<Map<String, String>> bookingData = myBookingsPage.getAllBookingCardDetails(eventName);
@@ -312,8 +309,8 @@ public class BookingTest extends BaseTest {
         Assert.assertEquals(eventDetails.get("Event"), eventName);
         Assert.assertEquals(eventDetails.get("City"), bookingData.getFirst().get("city"));
 
-        String rawDate1 = eventDetails.get("Date").toString().split(", ")[1].trim(); // "16 September 2027"
-        String rawDate2 = bookingData.getFirst().get("date").replaceAll("^[^a-zA-Z0-9]+", "").trim(); // "16 Sept 2027" או "16 Sep 2027"
+        String rawDate1 = eventDetails.get("Date").toString().split(", ")[1].trim();
+        String rawDate2 = bookingData.getFirst().get("date").replaceAll("^[^a-zA-Z0-9]+", "").trim();
 
         String cleanDate1 = rawDate1.replaceAll("(\\d+) ([A-Za-z]{3})[A-Za-z]* (\\d{4})", "$1 $2 $3");
         String cleanDate2 = rawDate2.replaceAll("(\\d+) ([A-Za-z]{3})[A-Za-z]* (\\d{4})", "$1 $2 $3");
@@ -338,7 +335,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -355,7 +352,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> booking = EventApiService.bookEventFromAPI(token, bookingPayload);
+        Map<String, Object> booking = EventApiService.bookEventFromAPI(getPage().request(), token, bookingPayload);
         Assert.assertEquals(booking.get("bookingStatus"), "confirmed");
 
         MyBookingsPage myBookingsPage = headerComponent.goToMyBookings();
@@ -390,7 +387,7 @@ public class BookingTest extends BaseTest {
                 numOfSeats
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -407,7 +404,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> booking = EventApiService.bookEventFromAPI(token, firstBookingPayload);
+        Map<String, Object> booking = EventApiService.bookEventFromAPI(getPage().request(), token, firstBookingPayload);
         Assert.assertEquals(booking.get("bookingStatus"), "confirmed");
 
         Map<String, Object> secondBookingPayload = TestDataBuilder.getCreateBookingPayload(
@@ -418,7 +415,7 @@ public class BookingTest extends BaseTest {
                 createdEventID
         );
 
-        Map<String, Object> bookingSecond = EventApiService.bookEventFromAPI(token, secondBookingPayload);
+        Map<String, Object> bookingSecond = EventApiService.bookEventFromAPI(getPage().request(), token, secondBookingPayload);
         Assert.assertEquals(bookingSecond.get("bookingStatus"), "confirmed");
         getPage().reload();
         Locator card = eventsPage.getEventCard(eventName);
@@ -441,7 +438,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> eventResponseData = EventApiService.createEventFromAPI(token, eventPayload);
+        Map<String, Object> eventResponseData = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -470,7 +467,7 @@ public class BookingTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))

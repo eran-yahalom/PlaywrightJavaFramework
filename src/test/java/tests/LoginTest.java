@@ -23,7 +23,7 @@ public class LoginTest extends BaseTest {
         DashboardPage dashboardPage = new DashboardPage(getPage());
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         Assert.assertTrue(loginPage.loginToApplication(email, password), "Login failed");
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
@@ -77,7 +77,7 @@ public class LoginTest extends BaseTest {
         LoginPage loginPage = new LoginPage(getPage());
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
@@ -88,7 +88,7 @@ public class LoginTest extends BaseTest {
         String password = TestDataUtils.getPassword();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload("abc@yopmail.com", password);
-        Map<String, Object> driverDetails = EventApiService.invalidLoginFromAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.invalidLoginFromAPI(getPage().request(), payload);
         Assert.assertEquals(driverDetails.get("status"), 400);
         Assert.assertEquals(driverDetails.get("error"), "Invalid email or password");
     }
@@ -99,8 +99,8 @@ public class LoginTest extends BaseTest {
         String password = TestDataUtils.getPassword();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
-        Map<String, Object> driverDetails = EventApiService.validLoginFromAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
+        Map<String, Object> driverDetails = EventApiService.validLoginFromAPI(getPage().request(), payload);
         Assert.assertEquals(driverDetails.get("status"), 200);
         Assert.assertTrue((Boolean) driverDetails.get("success"));
     }

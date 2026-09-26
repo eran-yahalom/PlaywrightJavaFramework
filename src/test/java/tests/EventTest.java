@@ -41,7 +41,7 @@ public class EventTest extends BaseTest {
         String eventName = TestDataUtils.getRandomEventTitle();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
@@ -74,7 +74,7 @@ public class EventTest extends BaseTest {
         String eventName = TestDataUtils.getRandomEventTitle();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
@@ -104,10 +104,10 @@ public class EventTest extends BaseTest {
         String email = TestDataUtils.getEmail();
         String password = TestDataUtils.getPassword();
         String eventName = TestDataUtils.getRandomEventTitle();
-        int numberOfSetSeats=TestDataUtils.getSeats();
+        int numberOfSetSeats = TestDataUtils.getSeats();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
@@ -147,7 +147,7 @@ public class EventTest extends BaseTest {
         int eventSetPrice = TestDataUtils.getPrice();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        EventApiService.registerNewDriverAPI(payload);
+        EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         assertThat(dashboardPage.getDiscoverTextLocator()).isVisible();
@@ -186,7 +186,7 @@ public class EventTest extends BaseTest {
         String eventName = TestDataUtils.getRandomEventTitle();
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
         String token = driverDetails.get("bearerToken").toString();
 
         Map<String, Object> eventPayload = TestDataBuilder.getCreateEventPayload(
@@ -200,7 +200,7 @@ public class EventTest extends BaseTest {
                 TestDataUtils.getSeats()
         );
 
-        Map<String, Object> event = EventApiService.createEventFromAPI(token, eventPayload);
+        Map<String, Object> event = EventApiService.createEventFromAPI(getPage().request(), token, eventPayload);
 
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
@@ -219,10 +219,10 @@ public class EventTest extends BaseTest {
         DashboardPage dashboardPage = new DashboardPage(getPage());
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
         String token = driverDetails.get("bearerToken").toString();
 
-        Map<String, Object> allEvents = EventApiService.getAllEvents(token);
+        Map<String, Object> allEvents = EventApiService.getAllEvents(getPage().request(), token);
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() ->
@@ -247,7 +247,7 @@ public class EventTest extends BaseTest {
         EventsPage eventsPage = new EventsPage(getPage());
 
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
         String token = driverDetails.get("bearerToken").toString();
 
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
@@ -265,7 +265,7 @@ public class EventTest extends BaseTest {
         assertThat(getPage().getByText("Event created!")).isVisible();
         eventsPage.goToEventsPage();
 
-        Map<String, Object> allEvents = EventApiService.getAllEvents(token);
+        Map<String, Object> allEvents = EventApiService.getAllEvents(getPage().request(), token);
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() ->
@@ -276,13 +276,13 @@ public class EventTest extends BaseTest {
         int eventsNumberFromUI = eventsPage.countEvents();
         List<Integer> ids = (List<Integer>) allEvents.get("idList");
 
-        Map<String, Object> deleteEvent = EventApiService.deleteEvent(token, ids.getLast());
+        Map<String, Object> deleteEvent = EventApiService.deleteEvent(getPage().request(), token, ids.getLast());
         await().atMost(Duration.ofSeconds(2))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() ->
                         Assert.assertEquals(deleteEvent.get("success"), true)
                 );
-        Map<String, Object> allEventsAfterDelete = EventApiService.getAllEvents(token);
+        Map<String, Object> allEventsAfterDelete = EventApiService.getAllEvents(getPage().request(), token);
         int afterDeleteAPI = (int) allEventsAfterDelete.get("totalEvents");
         getPage().reload();
         int eventsAfterDeleteUI = eventsPage.countEvents();
@@ -299,12 +299,11 @@ public class EventTest extends BaseTest {
 
         LoginPage loginPage = new LoginPage(getPage());
 
-
         getPage().route("**/api/events**", route -> route.fulfill(
                 new Route.FulfillOptions().setPath(Paths.get("src/test/resources/events_9.json"))
         ));
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         Assert.assertEquals(driverDetails.get("status"), "201");
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
@@ -325,15 +324,15 @@ public class EventTest extends BaseTest {
                 new Route.FulfillOptions().setPath(Paths.get("src/test/resources/events_4.json"))
         ));
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
 
         Assert.assertEquals(driverDetails.get("status"), "201");
         DashboardPage dashboardPage = loginPage.loginToApp(email, password);
         dashboardPage.clickOnEventsTopLink();
         Locator eventCards = getPage().getByTestId("event-card");
 
-        assertThat(eventCards.first()).isVisible();  //playwrite assert we wait 5 sec (page.waitForTimeout(5000);) for first card to show
+        assertThat(eventCards.first()).isVisible();
         Assert.assertEquals(eventCards.count(), 4);
-        assertThat(getPage().locator("mx-1")).isHidden(); // 9 elements banner is not visible
+        assertThat(getPage().locator("mx-1")).isHidden();
     }
 }

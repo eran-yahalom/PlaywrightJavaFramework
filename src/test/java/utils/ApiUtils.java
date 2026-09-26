@@ -3,7 +3,6 @@ package utils;
 import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.APIResponse;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.RequestOptions;
 import org.testng.Assert;
 
@@ -32,13 +31,13 @@ public class ApiUtils {
                 RequestOptions.create().setHeader("Authorization", "Bearer " + token));
     }
 
-    public static Map<String, Object> registerNewDriverAPI(Map<String, Object> payload) {
-
-        Playwright playwright = Playwright.create();
-        APIRequestContext apiRequestContext = playwright.request().newContext();
+    public static Map<String, Object> registerNewDriverAPI(APIRequestContext requestContext, Map<String, Object> payload) {
         Map<String, Object> registerDetails = new HashMap<>();
-        APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
-                RequestOptions.create().setData(payload));
+
+        APIResponse registerAPIResponse = requestContext.post(BASE_URL + REGISTER_URL,
+                RequestOptions.create()
+                        .setData(payload)
+                        .setHeader("Content-Type", "application/json"));
 
         Assert.assertTrue(registerAPIResponse.ok());
 
@@ -49,13 +48,13 @@ public class ApiUtils {
         return registerDetails;
     }
 
-    public static Map<String, Object> registerInvalidDriverAPI(Map<String, Object> payload) {
-
-        Playwright playwright = Playwright.create();
-        APIRequestContext apiRequestContext = playwright.request().newContext();
+    public static Map<String, Object> registerInvalidDriverAPI(APIRequestContext requestContext, Map<String, Object> payload) {
         Map<String, Object> registerDetails = new HashMap<>();
-        APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
-                RequestOptions.create().setData(payload));
+
+        APIResponse registerAPIResponse = requestContext.post(BASE_URL + REGISTER_URL,
+                RequestOptions.create()
+                        .setData(payload)
+                        .setHeader("Content-Type", "application/json"));
 
         Assert.assertFalse(registerAPIResponse.ok());
 
@@ -71,6 +70,7 @@ public class ApiUtils {
         APIResponse response = requestContext.post(BASE_URL + "/api/events",
                 RequestOptions.create()
                         .setHeader("Authorization", "Bearer " + token)
+                        .setHeader("Content-Type", "application/json")
                         .setData(eventData));
 
         Assert.assertNotNull(response);

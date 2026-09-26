@@ -3,7 +3,6 @@ package api;
 import com.jayway.jsonpath.JsonPath;
 import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.APIResponse;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.RequestOptions;
 import org.testng.Assert;
 
@@ -13,236 +12,147 @@ import java.util.Map;
 
 public class EventApiService {
 
-    private final APIRequestContext requestContext;
     private static final String BASE_URL = "https://api.eventhub.rahulshettyacademy.com";
     private static final String BOOKING_URL = "/api/bookings";
     private static final String EVENTS_URL = "/api/events";
     private static final String REGISTER_URL = "/api/auth/register";
     private static final String LOGIN_URL = "/api/auth/login";
-    private static final String DELETE_URL = "/api/events/";
 
-    public EventApiService(APIRequestContext requestContext) {
-        this.requestContext = requestContext;
-    }
-
-//    public static Map<String, Object> registerNewDriverAPI(Map<String, Object> payload) {
-//
-//        Playwright playwright = Playwright.create();
-//        APIRequestContext apiRequestContext = playwright.request().newContext();
-//        Map<String, Object> registerDetails = new HashMap<>();
-//        APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
-//                RequestOptions.create().setData(payload));
-//
-//        Assert.assertTrue(registerAPIResponse.ok());
-//
-//        registerDetails.put("bearerToken", JsonPath.read(registerAPIResponse.text(), "$.token"));
-//        registerDetails.put("userId", JsonPath.read(registerAPIResponse.text(), "$.user.id"));
-//        registerDetails.put("status", String.valueOf(registerAPIResponse.status()));
-//
-//        return registerDetails;
-//    }
-
-    public static Map<String, Object> registerNewDriverAPI(Map<String, Object> payload) {
+    public static Map<String, Object> registerNewDriverAPI(APIRequestContext requestContext, Map<String, Object> payload) {
         Map<String, Object> registerDetails = new HashMap<>();
 
-        // Playwright auto-closes at the end of this block
-        try (Playwright playwright = Playwright.create()) {
-            APIRequestContext apiRequestContext = playwright.request().newContext();
+        APIResponse registerAPIResponse = requestContext.post(BASE_URL + REGISTER_URL,
+                RequestOptions.create()
+                        .setData(payload)
+                        .setHeader("Content-Type", "application/json"));
 
-            APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
-                    RequestOptions.create()
-                            .setData(payload)
-                            .setHeader("Content-Type", "application/json"));
+        Assert.assertTrue(registerAPIResponse.ok(), "Registration API failed: " + registerAPIResponse.text());
 
-            Assert.assertTrue(registerAPIResponse.ok());
-
-            registerDetails.put("bearerToken", JsonPath.read(registerAPIResponse.text(), "$.token"));
-            registerDetails.put("userId", JsonPath.read(registerAPIResponse.text(), "$.user.id"));
-            registerDetails.put("status", String.valueOf(registerAPIResponse.status()));
-        }
-
-        return registerDetails;
-    }
-
-    public static Map<String, Object> registerInvalidDriverAPI(Map<String, Object> payload) {
-
-        Playwright playwright = Playwright.create();
-        APIRequestContext apiRequestContext = playwright.request().newContext();
-        Map<String, Object> registerDetails = new HashMap<>();
-        APIResponse registerAPIResponse = apiRequestContext.post(BASE_URL + REGISTER_URL,
-                RequestOptions.create().setData(payload));
-
-        Assert.assertFalse(registerAPIResponse.ok());
-
-        registerDetails.put("success", JsonPath.read(registerAPIResponse.text(), "$.success"));
-        registerDetails.put("error", JsonPath.read(registerAPIResponse.text(), "$.error"));
+        registerDetails.put("bearerToken", JsonPath.read(registerAPIResponse.text(), "$.token"));
+        registerDetails.put("userId", JsonPath.read(registerAPIResponse.text(), "$.user.id"));
         registerDetails.put("status", String.valueOf(registerAPIResponse.status()));
 
         return registerDetails;
     }
 
-    public static Map<String, Object> invalidLoginFromAPI(Map<String, Object> payload) {
-        Map<String, Object> loginDetails = new HashMap<>();
-        Playwright playwright = Playwright.create();
-        APIRequestContext requestContext = playwright.request().newContext();
-        APIResponse response = requestContext.post(BASE_URL + LOGIN_URL,
-                RequestOptions.create().setData(payload));
+    public static Map<String, Object> registerInvalidDriverAPI(APIRequestContext requestContext, Map<String, Object> payload) {
+        Map<String, Object> registerDetails = new HashMap<>();
 
-        Assert.assertNotNull(response);
-        loginDetails.put("success", JsonPath.read(response.text(), "$.success"));
+        APIResponse registerAPIResponse = requestContext.post(BASE_URL + REGISTER_URL,
+                RequestOptions.create()
+                        .setData(payload)
+                        .setHeader("Content-Type", "application/json"));
+
+        Assert.assertFalse(registerAPIResponse.ok());
+
+        registerDetails.put("success", JsonPath.read(registerAPIResponse.text(), "$.success"));
+        registerDetails.put("error", JsonPath.read(registerAPIResponse.text(), "$.error"));
+        registerDetails.put("status", registerAPIResponse.status());
+
+        return registerDetails;
+    }
+
+    public static Map<String, Object> invalidLoginFromAPI(APIRequestContext requestContext, Map<String, Object> payload) {
+        Map<String, Object> loginDetails = new HashMap<>();
+
+        APIResponse response = requestContext.post(BASE_URL + LOGIN_URL,
+                RequestOptions.create()
+                        .setData(payload)
+                        .setHeader("Content-Type", "application/json"));
+
+        loginDetails.put("status", response.status());
         loginDetails.put("error", JsonPath.read(response.text(), "$.error"));
-        loginDetails.put("status", response.status());
 
         return loginDetails;
     }
 
-    public static Map<String, Object> validLoginFromAPI(Map<String, Object> payload) {
+    public static Map<String, Object> validLoginFromAPI(APIRequestContext requestContext, Map<String, Object> payload) {
         Map<String, Object> loginDetails = new HashMap<>();
-        Playwright playwright = Playwright.create();
-        APIRequestContext requestContext = playwright.request().newContext();
-        APIResponse response = requestContext.post(BASE_URL + LOGIN_URL,
-                RequestOptions.create().setData(payload));
 
-        Assert.assertNotNull(response);
-        loginDetails.put("success", JsonPath.read(response.text(), "$.success"));
-        loginDetails.put("bearerToken", JsonPath.read(response.text(), "$.token"));
-        loginDetails.put("userID", JsonPath.read(response.text(), "$.user.id"));
+        APIResponse response = requestContext.post(BASE_URL + LOGIN_URL,
+                RequestOptions.create()
+                        .setData(payload)
+                        .setHeader("Content-Type", "application/json"));
+
+        Assert.assertTrue(response.ok(), "Login API failed: " + response.text());
+
         loginDetails.put("status", response.status());
+        loginDetails.put("success", JsonPath.read(response.text(), "$.success"));
+        loginDetails.put("token", JsonPath.read(response.text(), "$.token"));
 
         return loginDetails;
     }
 
-    public static Map<String, Object> createEventFromAPI(String token, Map<String, Object> eventData) {
+    public static Map<String, Object> createEventFromAPI(APIRequestContext requestContext, String token, Map<String, Object> payload) {
         Map<String, Object> eventDetails = new HashMap<>();
-        Playwright playwright = Playwright.create();
-        APIRequestContext requestContext = playwright.request().newContext();
+
         APIResponse response = requestContext.post(BASE_URL + EVENTS_URL,
                 RequestOptions.create()
                         .setHeader("Authorization", "Bearer " + token)
-                        .setData(eventData));
+                        .setHeader("Content-Type", "application/json")
+                        .setData(payload));
 
-        Assert.assertNotNull(response);
+        Assert.assertTrue(response.ok(), "Create event API failed: " + response.text());
 
-        eventDetails.put("status", response.status());
         eventDetails.put("eventID", JsonPath.read(response.text(), "$.data.id"));
-        eventDetails.put("price", JsonPath.read(response.text(), "$.data.price"));
-        eventDetails.put("totalSeats", JsonPath.read(response.text(), "$.data.totalSeats"));
-        eventDetails.put("availableSeats", JsonPath.read(response.text(), "$.data.availableSeats"));
-        eventDetails.put("eventDate", JsonPath.read(response.text(), "$.data.eventDate"));
-        eventDetails.put("title", JsonPath.read(response.text(), "$.data.title"));
-        eventDetails.put("category", JsonPath.read(response.text(), "$.data.category"));
-        eventDetails.put("venue", JsonPath.read(response.text(), "$.data.venue"));
+        eventDetails.put("status", String.valueOf(response.status()));
 
         return eventDetails;
     }
 
-    public static Map<String, Object> bookEventFromAPI(String token, Map<String, Object> bookingData) {
-        Map<String, Object> bookingEventData = new HashMap<>();
-        Playwright playwright = Playwright.create();
-        APIRequestContext requestContext = playwright.request().newContext();
+    public static Map<String, Object> bookEventFromAPI(APIRequestContext requestContext, String token, Map<String, Object> payload) {
+        Map<String, Object> bookingDetails = new HashMap<>();
+
         APIResponse response = requestContext.post(BASE_URL + BOOKING_URL,
                 RequestOptions.create()
                         .setHeader("Authorization", "Bearer " + token)
-                        .setData(bookingData));
+                        .setHeader("Content-Type", "application/json")
+                        .setData(payload));
 
-        bookingEventData.put("bookingID", JsonPath.read(response.text(), "$.data.id").toString());
-        bookingEventData.put("eventID", JsonPath.read(response.text(), "$.data.event.id").toString());
-        bookingEventData.put("bookingQTY", JsonPath.read(response.text(), "$.data.quantity").toString());
-        bookingEventData.put("bookingStatus", JsonPath.read(response.text(), "$.data.status"));
-        bookingEventData.put("bookingREF", JsonPath.read(response.text(), "$.data.bookingRef"));
-        bookingEventData.put("bookingRCategory", JsonPath.read(response.text(), "$.data.event.category"));
-        bookingEventData.put("bookingVenue", JsonPath.read(response.text(), "$.data.event.venue"));
-        bookingEventData.put("totalPrice", JsonPath.read(response.text(), "$.data.totalPrice"));
+        Assert.assertTrue(response.ok(), "Book event API failed: " + response.text());
 
-        return bookingEventData;
+        bookingDetails.put("bookingREF", JsonPath.read(response.text(), "$.data.bookingRef"));
+        bookingDetails.put("bookingQTY", String.valueOf(JsonPath.read(response.text(), "$.data.numberOfTickets")));
+        bookingDetails.put("bookingID", String.valueOf(JsonPath.read(response.text(), "$.data.id")));
+        bookingDetails.put("totalPrice", String.valueOf(JsonPath.read(response.text(), "$.data.totalPrice")));
+        bookingDetails.put("bookingStatus", JsonPath.read(response.text(), "$.data.status"));
+
+        return bookingDetails;
     }
 
-    public static Map<String, Object> getAllEvents(String token) {
-        Map<String, Object> allEventsData = new HashMap<>();
-        Playwright playwright = Playwright.create();
-        APIRequestContext requestContext = playwright.request().newContext();
+    public static Map<String, Object> getAllEvents(APIRequestContext requestContext, String token) {
+        Map<String, Object> allEventsDetails = new HashMap<>();
+
         APIResponse response = requestContext.get(BASE_URL + EVENTS_URL,
                 RequestOptions.create()
-                        .setHeader("Authorization", "Bearer " + token));
+                        .setHeader("Authorization", "Bearer " + token)
+                        .setHeader("Content-Type", "application/json"));
 
-        List<Integer> eventIds = JsonPath.read(response.text(), "$.data[*].id");
-        allEventsData.put("status", response.status());
-        allEventsData.put("totalEvents", JsonPath.read(response.text(), "$.pagination.total"));
-        allEventsData.put("idList", eventIds);
+        Assert.assertTrue(response.ok(), "Get all events API failed: " + response.text());
 
-        return allEventsData;
+        List<Object> eventsList = JsonPath.read(response.text(), "$.data");
+        List<Integer> idList = JsonPath.read(response.text(), "$.data[*].id");
+
+        allEventsDetails.put("status", response.status());
+        allEventsDetails.put("totalEvents", eventsList.size());
+        allEventsDetails.put("idList", idList);
+
+        return allEventsDetails;
     }
 
-    public static Map<String, Object> deleteEvent(String token, Object eventId) {
-        Map<String, Object> allEventsData = new HashMap<>();
-        Playwright playwright = Playwright.create();
-        APIRequestContext requestContext = playwright.request().newContext();
-        APIResponse response = requestContext.delete(BASE_URL + DELETE_URL + eventId,
-                RequestOptions.create()
-                        .setHeader("Authorization", "Bearer " + token));
+    public static Map<String, Object> deleteEvent(APIRequestContext requestContext, String token, int eventId) {
+        Map<String, Object> deleteDetails = new HashMap<>();
 
-        allEventsData.put("success", JsonPath.read(response.text(), "$.success"));
-        allEventsData.put("message", JsonPath.read(response.text(), "$.message"));
-
-        return allEventsData;
-    }
-
-    public Map<String, String> createNewEventAPI(String token, Map<String, Object> eventData) {
-        Map<String, String> createEventData = new HashMap<>();
-        APIResponse response = requestContext.post(BASE_URL + "/api/events",
+        APIResponse response = requestContext.delete(BASE_URL + EVENTS_URL + "/" + eventId,
                 RequestOptions.create()
                         .setHeader("Authorization", "Bearer " + token)
-                        .setData(eventData));
+                        .setHeader("Content-Type", "application/json"));
 
-        Assert.assertNotNull(response);
-        createEventData.put("eventID", JsonPath.read(response.text(), "$.data.id").toString());
-        createEventData.put("eventHeader", JsonPath.read(response.text(), "$.data.title"));
-        createEventData.put("seats", JsonPath.read(response.text(), "$.data.availableSeats").toString());
-        createEventData.put("price", JsonPath.read(response.text(), "$.data.price"));
-        createEventData.put("status", String.valueOf(response.status()));
-        createEventData.put("statusText", response.statusText());
+        Assert.assertTrue(response.ok(), "Delete event API failed: " + response.text());
 
-        return createEventData;
-    }
+        deleteDetails.put("status", response.status());
+        deleteDetails.put("success", JsonPath.read(response.text(), "$.success"));
 
-    public APIResponse updateEvent(String token, int eventId, Map<String, Object> updateData) {
-        return requestContext.put(BASE_URL + "/api/events/" + eventId,
-                RequestOptions.create()
-                        .setHeader("Authorization", "Bearer " + token)
-                        .setData(updateData));
-    }
-
-    public APIResponse getEventById(String token, int eventId) {
-        return requestContext.get(BASE_URL + "/api/events/" + eventId,
-                RequestOptions.create()
-                        .setHeader("Authorization", "Bearer " + token));
-    }
-
-    public APIResponse getAllEvents(String token, int page, int limit) {
-        return requestContext.get(BASE_URL + "/api/events",
-                RequestOptions.create()
-                        .setQueryParam("page", String.valueOf(page))
-                        .setQueryParam("limit", String.valueOf(limit))
-                        .setHeader("Authorization", "Bearer " + token));
-    }
-
-    public APIResponse createBooking(String token, String name, String email, String phone, int quantity, int eventId) {
-        Map<String, Object> bookingData = new HashMap<>();
-        bookingData.put("customerName", name);
-        bookingData.put("customerEmail", email);
-        bookingData.put("customerPhone", phone);
-        bookingData.put("quantity", quantity);
-        bookingData.put("eventId", eventId);
-
-        return requestContext.post(BASE_URL + "/api/bookings",
-                RequestOptions.create()
-                        .setHeader("Authorization", "Bearer " + token)
-                        .setData(bookingData));
-    }
-
-    public APIResponse getBookingByRef(String token, String bookingRef) {
-        return requestContext.get(BASE_URL + "/api/bookings/ref/" + bookingRef,
-                RequestOptions.create()
-                        .setHeader("Authorization", "Bearer " + token));
+        return deleteDetails;
     }
 }

@@ -27,7 +27,7 @@ public class AllEventsTest extends BaseTest {
 
         // 1. הרשמת משתמש/דרייבר חדש ב-API
         Map<String, Object> payload = TestDataBuilder.getLoginPayload(email, password);
-        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(payload);
+        Map<String, Object> driverDetails = EventApiService.registerNewDriverAPI(getPage().request(), payload);
         Assert.assertNotNull(driverDetails, "driverDetails is null");
 
         String token = (String) driverDetails.get("bearerToken");
@@ -37,7 +37,7 @@ public class AllEventsTest extends BaseTest {
             getPage().context().addInitScript("window.localStorage.setItem('eventhub_token', '" + token + "');");
 
             // 3. ניווט ל-URL – הדף נטען כשה-Token כבר קיים ב-localStorage
-            getPage().navigate("https://eventhub.rahulshettyacademy.com/");
+            getPage().navigate(base_url != null ? base_url : "https://eventhub.rahulshettyacademy.com/");
         }
 
         // 4. לחיצה על Manage Events
@@ -106,7 +106,6 @@ public class AllEventsTest extends BaseTest {
                 String.valueOf(TestDataUtils.getPrice()),
                 String.valueOf(TestDataUtils.getSeats()));
 
-//        assertThat(getPage().getByText("Event created!")).isVisible();
         assertThat(getPage().getByText(Pattern.compile("Event created", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
         assertThat(getPage().getByText("All Events")).isVisible();
@@ -138,9 +137,6 @@ public class AllEventsTest extends BaseTest {
 
         assertThat(getPage().getByText(Pattern.compile("All Events", Pattern.CASE_INSENSITIVE)))
                 .isVisible(new LocatorAssertions.IsVisibleOptions().setTimeout(10000));
-
-
-        //  assertThat(getPage().getByText("All Events")).isVisible();
 
         Locator event = adminEventPage.getEventRow(eventName);
         event.getByText("edit").click();
@@ -190,8 +186,5 @@ public class AllEventsTest extends BaseTest {
         assertThat(card.locator("td>span").first()).hasText(eventName);
         assertThat(card.locator("td>span").nth(1)).hasText((String) uneditedData.get("category"));
         assertThat(card.locator("td:nth-child(3)").first()).hasText((String) uneditedData.get("city"));
-//        Assert.assertEquals(card.locator("td>span").first().innerText(), eventName, "Event names don't match");
-//        Assert.assertEquals(card.locator("td>span").nth(1).innerText(), uneditedData.get("category"), "Category doesn't match");
-//        Assert.assertEquals(card.locator("td:nth-child(3)").first().innerText(), uneditedData.get("city"), "City doesn't match");
     }
 }
